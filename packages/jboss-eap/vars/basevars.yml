@@ -1,0 +1,11 @@
+extract_folder: "{{ pkg_file.split('/')[0] }}"
+jboss_eap_home_dir_name: jboss-eap-{{ pkg.version }}
+jboss_eap_library_dest_dir: "/data/{{ jboss_eap_home_dir_name }}"
+jboss_eap_artifacts_dl_dest_dir: /data
+jboss_eap_group: jboss_as
+jboss_eap_user: jboss_as
+jboss_eap_service_conf_dir: "/etc/default"
+jboss_eap_etc_initd_dir: "/etc/init.d"
+jboss_eap_admin_user: "jbosseap"
+jboss_eap_admin_password: "Password1"
+service: jboss-eap-rhel

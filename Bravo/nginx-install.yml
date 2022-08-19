@@ -1,0 +1,21 @@
+# NGINX Installation
+
+- name: Install prerequisites
+  hosts: Bravo
+  tasks:
+  - name: Install wget & yum-utils
+    yum:
+        name:
+                - wget
+                - yum-utils
+                -  yum-plugin-versionlock
+        state: latest
+
+
+- name: includiong vars
+  hosts: Bravo
+  vars_files:
+        - vars/base.yml
+  tasks:
+        - name: Install Nginx
+          include: tasks/nginx.yml

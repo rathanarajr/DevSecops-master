@@ -1,0 +1,47 @@
+
+- name: "include base vars file"
+  include_vars: vars/basevars.yml
+
+- name: "include secret.yml"
+  include_vars: vars/secret.yml
+
+- name: "download jboss binaries"
+  include_tasks: tasks/tsk_download_jboss.yml
+
+- name: "Build and Run RH EAP Platform"
+  include_tasks: tasks/tsk_configure_jboss_server.yml
+
+- name: "upload oracle jar into module folder"
+  include_tasks: tasks/tsk_upload_oracle_and_config.yml
+
+- name: "configure datasource for {{ target_app }}"
+  include_tasks: tasks/tsk_configure_jboss_datasource.yml
+  when: target_app  == "XA0114"  or target_app == "XA0095" or target_app == "XA0167"
+
+- name: "configure datasource for {{ target_app }}"
+  include_tasks: tasks/tsk_configure_xsh_datasource.yml
+  when: target_app == "XA0165"
+
+- name: "adding system properties"
+  include_tasks: tasks/tsk_system_properties.yml
+
+- name: "configure AMQ in standalone"
+  include_tasks: tasks/tsk_configure_amq_legacy_rar.yml
+
+- name: "configure subsystem"
+  include_tasks: tasks/tsk_configure_amq_messaging_subsystem.yml
+
+- name: "configure AMQ source in rar file"
+  include_tasks: tasks/tsk_update_legacy_amq_rar_file.yml
+
+- name: "installing eclipse jar file in modules main folder"
+  include_tasks: tasks/tsk_download_configure_eclipslink.yml
+
+- name: "replacing the init address"
+  include_tasks: tasks/tsk_replace_binding_ip_address.yml
+
+- name: "start the jboss service"
+  include_tasks: tasks/tsk_start_jboss.yml
+
+- name: " validation"
+  include_tasks: tasks/tsk_datasource_cli_validation.yml

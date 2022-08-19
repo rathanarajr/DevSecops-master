@@ -1,0 +1,5 @@
+- name: "include base vars file"
+  include_vars: vars/basevars.yml
+
+- name: "installing Active MQ"
+  include_tasks: tasks/amq-broker.yml

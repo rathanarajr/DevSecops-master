@@ -1,0 +1,25 @@
+- name: "include base vars file"
+  include_vars: vars/basevars.yml
+
+- name: remove jboss-eap
+  command: rm -rf jboss-eap-7.3
+  args:
+    chdir: "{{ jboss_eap_path }}"
+
+
+- name: remove jboss-eap.conf
+  command: rm -rf jboss-eap.conf
+  args:
+    chdir: "{{ jboss_eap_service_conf_dir }}"
+
+
+- name: remove jboss-eap-rhel.sh
+  command: rm -rf jboss-eap-rhel.sh
+  args:
+    chdir: "{{ jboss_eap_etc_initd_dir }}"
+
+
+- name: remove jboss zip file
+  command: rm -rf jboss-eap-7.3.0.zip
+  args:
+    chdir: "{{ jboss_eap_path }}"

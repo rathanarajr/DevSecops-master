@@ -1,0 +1,82 @@
+- name: "pull the stnandalone file form jfrog"
+  get_url:
+    url: "{{ datasource_url }}"
+    url_username: "{{ art_username }}"
+    url_password: "{{ art_password }}"
+    dest: "{{ destination_path }}"
+    mode: '0755'
+    force_basic_auth: yes
+
+- name: "adding multiple replace in standalone.xml file"
+  replace:
+    path: "{{ datasource_path }}"
+    regexp: "{{ item.regexp1 }}"
+    replace: "{{ item.replace }}"
+  with_items:
+    - { regexp1: "{{ datasource_name }}", replace: "{{ datasource_name_value }}" }
+    - { regexp1: "{{ datasource_jndiname }}", replace: "{{ datasource_jndiname_value }}" }
+    - { regexp1: "{{ datasource_portnumber }}", replace: "{{ datasource_portnumber_value }}" }
+    - { regexp1: "{{ datasource_servername }}", replace: "{{ datasource_servername_value }}" }
+    - { regexp1: "{{ datasource_urlname }}", replace: "{{ datasource_urlname_value }}" }
+    - { regexp1: "{{ datasource_minsize }}", replace: "{{ datasource_minsize_value }}" }
+    - { regexp1: "{{ datasource_initsize }}", replace: "{{ datasource_initsize_value }}" }
+    - { regexp1: "{{ datasource_maxsize }}", replace: "{{ datasource_maxsize_value }}" }
+    - { regexp1: "{{ datasource_suname }}", replace: "{{ datasource_suname_value }}" }
+    - { regexp1: "{{ datasource_spasswd }}", replace: "{{ datasource_spasswd_value }}" }
+- name: "print com folder"
+  debug:
+    msg: "com folder is {{ com_path }}"
+
+- name: "creating com folder"
+  ansible.builtin.file:
+    path: "{{ com_path }}"
+    state: directory
+    group: jboss_as
+    owner: jboss-as
+
+- name: "pulling oracle file from jfrog"
+  get_url:
+    url: "{{ oracle_url }}"
+    url_username: "{{ art_username }}"
+    url_password: "{{ art_password }}"
+    dest: "{{ dest_folder }}"
+    force_basic_auth: yes
+
+- name: "ensure oracle directory exist"
+  file:
+    path: "{{ dest_folder }}"
+    state: directory
+    group: jboss_as
+    owner: jboss-as
+
+- name: "unarchive oracle file"
+  unarchive:
+    src: "{{ src_url }}"
+    dest: "{{ dest_folder }}"
+    remote_src: yes
+    group: jboss_as
+    owner: jboss-as
+
+- name: "remove the archive file"
+  file:
+    path: "{{ src_url }}"
+    state: absent
+
+- name: "change permissions"
+  file: path={{ item }} mode=0775
+  with_items:
+    - "{{ module_xml_file }}"
+    - "{{ jar_path }}"
+
+- name: "service jboss restart"
+  service:
+    name: "{{ service }}"
+    state: restarted
+
+- name: "validation"
+  shell:
+    cmd: "{{ validation_cmd }}"
+  register: command_opt
+- debug:
+         var: command_opt.stdout_lines
+  when: command_opt is succeeded

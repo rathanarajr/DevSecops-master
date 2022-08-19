@@ -1,0 +1,23 @@
+#Task to Install Redis
+
+- name: Ensure Redis is present
+  yum:
+     name: redis-{{ Redis_Version }}
+     state: present
+
+- name: Ensure Redis Configuration
+  lineinfile:
+     path: /etc/redis.conf
+     regexp: 'bind 127.0.0.1'
+     line: 'bind 0.0.0.0'
+
+- name: Ensure Redis is started
+  service:
+     name: redis
+     state: started
+     enabled: yes
+
+# - name: Lock Redis from being updated
+#   community.general.yum_versionlock:
+#      state: present
+#      name: redis

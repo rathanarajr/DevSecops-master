@@ -1,0 +1,15 @@
+
+- name: "Download and Build RH EAP Platform"
+  hosts:
+    - {{ target }}
+  become: true
+  remote_user: "{{ az_rhel_adminuser }}"
+  vars:
+    - ansible_ssh_user: "{{ az_rhel_adminuser }}"
+    - ansible_ssh_private_key_file: "{{ az_rhel_vm_key }}"
+    - ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+  vars_files:
+    - vars/basevars.yml
+  tasks:
+  - name: "install Openjdk 11"
+    include: tasks/tsk_openjdk_install.yml

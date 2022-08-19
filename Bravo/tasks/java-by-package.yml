@@ -1,0 +1,66 @@
+#Task to install Java ( RedHat OpenJDK )
+
+- name: Get Java ZIP Package Name
+  set_fact:
+          Java_zip_package: "{{ item.value.zip_pkg }}"
+          Java_zip_folder: "{{ item.value.zip_folder }}"
+          Java_Version: "{{ item.key }}"
+  when: java_version == "{{ item.key }}"
+  loop: "{{ lookup('dict', java.version) }}"
+
+- name: Download Java ( RedHat OpenJDK  )
+  get_url:
+          url: "{{ art_url }}/packages/java/{{ Java_Version }}/{{ Java_zip_package }}"
+          url_username: "{{ art_id }}"
+          url_password: "{{ art_password }}"
+          dest: /tmp
+          mode: 0700
+          force_basic_auth: yes
+
+- name: ensure Java directory exists
+  file:
+          path: /opt/{{ Java_zip_folder }}
+          state: directory
+          mode: 0755
+
+- name: Unarcive Java file
+  unarchive:
+          src: /tmp/{{ Java_zip_package }}
+          dest: /opt/{{ Java_zip_folder }}
+          extra_opts: [--strip-components=1]
+          remote_src: yes
+
+- name: Alternatives Java link created
+  alternatives:
+          name: java
+          link: /usr/bin/java
+          path: /opt/{{ Java_zip_folder }}/bin/java
+          priority: 1
+
+- name: Alternatives Javac link created
+  alternatives:
+          name: javac
+          link: /usr/bin/javac
+          path: /opt/{{ Java_zip_folder }}/bin/javac
+          priority: 1
+
+- name: Update Profile with Java Home variable
+  lineinfile:
+          path: /etc/profile
+          state: present
+          regexp: "export JAVA_HOME"
+          line: 'export JAVA_HOME="/opt/{{ Java_zip_folder }}"'
+
+- name: Update Path with Java Home variable
+  lineinfile:
+          path: /etc/profile
+          line: 'export PATH=$PATH:$JAVA_HOME/bin'
+
+- name: Source Profile File
+  shell:
+          cmd: source /etc/profile
+
+- name: Delete Java Package File
+  file:
+          path: /tmp/{{ Java_zip_package }}
+          state: absent

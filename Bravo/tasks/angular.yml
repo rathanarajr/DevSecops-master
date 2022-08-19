@@ -1,0 +1,98 @@
+#Task to install Angular UI
+
+- name: Install the 'Development tools' package group
+  yum:
+    name: "@Development tools"
+    state: present
+
+- name: Disable PHP modules
+  shell: yes | yum module disable php
+
+- name: Fetch nodesource file
+  uri:
+    url: https://rpm.nodesource.com/setup_14.x
+    return_content: yes
+  register: node_installer
+
+- name: Run nodesource setup file
+  shell:
+    cmd: sh -s -- -y
+    stdin: "{{ node_installer.content }}"
+
+- name: Set nodejs 14 as default
+  shell: yes | yum module enable nodejs:14
+
+- name: Install nodejs
+  yum:
+    name: "@nodejs"
+    state: present
+
+- name: get node version
+  shell: node -v
+  register: node_version
+
+- name: print node version
+  debug:
+    msg: "{{ node_version.stdout }}"
+
+- name: get npm version
+  shell: npm -v
+  register: npm_version
+
+- name: print npm version
+  debug:
+    msg: "{{ npm_version.stdout }}"
+
+- name: Create Global npm Directory
+  become:  yes
+  become_user: "{{ Bravo_Username }}"
+  file:
+    path: "/home/{{ Bravo_Username }}/.npm-global"
+    state: directory
+    mode: '0755'
+
+- name: Prepare for npm global install
+  become:  yes
+  become_user: "{{ Bravo_Username }}"
+  shell:
+    cmd: "npm config set prefix '/home/{{ Bravo_Username }}/.npm-global'"
+
+- name: add npm global to bath
+  become:  yes
+  become_user: "{{ Bravo_Username }}"
+  lineinfile:
+    dest: "/home/{{ Bravo_Username }}/.bash_profile"
+    line: "export PATH=~/.npm-global/bin:$PATH"
+
+- name: add npm global to bath
+  become:  yes
+  become_user: "{{ Bravo_Username }}"
+  lineinfile:
+    dest: "/home/{{ Bravo_Username }}/.npmrc"
+    line: "{{ item }}"
+  with_items: 
+    - "prefix=/home/{{ Bravo_Username }}/.npm-global"
+    - "proxy=http://10.16.32.17:8080/"
+    - "https-proxy=http://10.16.32.17:8080/"
+    - "https_proxy=http://10.16.32.17:8080/"
+
+
+- name: Install angular NPM pacakges
+  become:  yes
+  become_user: "{{ Bravo_Username }}"
+  shell:
+     cmd: "./home/{{ Bravo_Username }}/.bash_profile; npm install -g {{ item }}"
+  with_items:
+     - "angular-ui-bootstrap"
+     - "@angular/cli@13"
+     - "webpack"
+     - "webpack-dev-server"
+     - "webpack-merge"
+     - "@angular/common"
+     - "@angular/compiler"
+     - "@angular/core"
+     - "@angular/forms"
+     - "@angular/http"
+     - "@angular/platform-browser"
+     - "@angular/platform-browser-dynamic"
+     - "@angular/router"

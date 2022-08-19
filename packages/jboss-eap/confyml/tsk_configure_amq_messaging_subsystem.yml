@@ -1,0 +1,56 @@
+- name: Insert jboss activemq messaging subsystem
+  blockinfile:
+    path: "{{ datasource_path }}"
+    marker: "<!-- Add messaging activemq subsystem block -->"
+    insertbefore: <subsystem xmlns="urn:wildfly:microprofile-config-smallrye:1.0"/>
+    backup: no
+    block: |
+      <subsystem xmlns="urn:jboss:domain:messaging-activemq:8.0">
+          <server name="default">
+              <statistics enabled="${wildfly.messaging-activemq.statistics-enabled:${wildfly.statistics-enabled:false}}"/>
+              <security-setting name="#">
+                  <role name="guest" send="true" consume="true" create-non-durable-queue="true" delete-non-durable-queue="true"/>
+              </security-setting>
+              <address-setting name="#" dead-letter-address="jms.queue.DLQ" expiry-address="jms.queue.ExpiryQueue" max-size-bytes="10485760" page-size-bytes="2097152" message-counter-history-day-limit="10"/>
+              <http-connector name="http-connector" socket-binding="http" endpoint="http-acceptor"/>
+              <http-connector name="http-connector-throughput" socket-binding="http" endpoint="http-acceptor-throughput">
+                  <param name="batch-delay" value="50"/>
+              </http-connector>
+              <in-vm-connector name="in-vm" server-id="0">
+                  <param name="buffer-pooling" value="false"/>
+              </in-vm-connector>
+              <http-acceptor name="http-acceptor" http-listener="default"/>
+              <http-acceptor name="http-acceptor-throughput" http-listener="default">
+                  <param name="batch-delay" value="50"/>
+                  <param name="direct-deliver" value="false"/>
+              </http-acceptor>
+              <in-vm-acceptor name="in-vm" server-id="0">
+                  <param name="buffer-pooling" value="false"/>
+              </in-vm-acceptor>
+              <jms-queue name="ExpiryQueue" entries="java:/jms/queue/ExpiryQueue"/>
+              <jms-queue name="DLQ" entries="java:/jms/queue/DLQ"/>
+              <connection-factory name="InVmConnectionFactory" entries="java:/ConnectionFactory" connectors="in-vm"/>
+              <connection-factory name="RemoteConnectionFactory" entries="java:jboss/exported/jms/RemoteConnectionFactory" connectors="http-connector"/>
+          </server>
+      </subsystem>
+
+- name: Insert XML surrounded by custom markers to add activemq messaging extension
+  blockinfile:
+    path: "{{ datasource_path }}"
+    marker: "<!-- Add extension messaging activemq module -->"
+    insertbefore: <extension module="org.wildfly.extension.io"/>
+    backup: no
+    block: |
+      <extension module="org.wildfly.extension.messaging-activemq"/>
+
+- name: Insert XML surrounded by custom markers for adding MDB resource adapter section
+  blockinfile:
+    path: "{{ datasource_path }}"
+    marker: "<!-- Add EJB MDB resource adapter block -->"
+    insertafter: <subsystem xmlns="urn:jboss:domain:ejb3:6.0">
+    backup: no
+    block: |
+      <mdb>
+          <resource-adapter-ref resource-adapter-name="${ejb.resource-adapter-name:legacyactivemq.rar}"/>
+          <bean-instance-pool-ref pool-name="mdb-strict-max-pool"/>
+      </mdb>

@@ -1,0 +1,35 @@
+# Configure Nginx
+
+- name: Adding ports
+  lineinfile:
+          path: /etc/services
+          state: present
+          line: "{{ item }}"
+  with_items:
+          - cas-ui-nginx      49002/tcp     # CAS UI NGINX
+          - cas-nginx-cors    49003/tcp     # CAS CORS
+          - cas-nginx-xsh     49004/tcp     # CAS XSH-CAS
+
+- name: Copy nginx configuration in place.
+  copy:
+    src: 'files/nginx.conf'
+    dest: '/etc/nginx/'
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Copy nginx proxy configuration in place.
+  copy:
+    src: 'files/proxy.conf'
+    dest: '/etc/nginx/'
+    owner: root
+    group: root
+    mode: 0644
+    
+- name: Copy nginx proxy configuration in place.
+  copy:
+    src: 'files/nginx-cors-map.conf'
+    dest: '/etc/nginx/conf.d'
+    owner: root
+    group: root
+    mode: 0644

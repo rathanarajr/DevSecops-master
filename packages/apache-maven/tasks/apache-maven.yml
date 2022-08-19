@@ -1,0 +1,51 @@
+  - name: "Set Required Variables"
+    set_fact:
+      pkg_folder: "/tmp/{{ pkg.package }}-{{ pkg.version }}"
+      extract_folder: "{{ pkg_file.split('/')[0] }}"
+
+  - name: "Set Optional Variables"
+    include_vars: "../packages/{{ pkg.package }}/vars/basevars.yml"
+    ignore_errors: yes
+
+  - name: ensure Maven directory exists
+    file:
+      path: /opt/maven
+      state: directory
+  
+  - name: Unzip Maven file
+    unarchive:
+      src: "{{ pkg_folder }}/{{ maven_pkg }}"
+      dest: /opt/maven
+      extra_opts: [--strip-components=1]
+      remote_src: yes
+
+  - name: Correct maven folder permission
+    file:
+            path: /opt/maven
+            state: directory
+            mode: 0755
+
+  - name: Correct bin folder permission
+    file:
+            path: /opt/maven/bin
+            state: directory
+            mode: 0755
+  
+  - name: Create a symbolic link for mvn
+    file:
+      src: /opt/maven/bin/mvn
+      dest: /usr/bin/mvn
+      state: link
+  
+  - name: Update Profile with Maven Home variable
+    lineinfile:
+      path: /etc/profile
+      state: present
+      line: "{{ item }}"
+    with_items:
+      - 'export M2_HOME="/opt/maven"'
+      - 'export PATH=$PATH:$M2_HOME/bin'
+  
+  - name: Source Profile File
+    shell:
+      cmd: source /etc/profile

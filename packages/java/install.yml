@@ -1,0 +1,13 @@
+# Java Installation
+
+- name: "include base vars file"
+  include_vars: vars/basevars.yml
+
+- name: "Install Java binaries"
+  include_tasks: tasks/java.yml
+  when: pkg.source != "yaml"
+  
+- name: "Install Java by yum package"
+  include_tasks: tasks/java_yum.yml
+  when: pkg.source == "yaml"
+

@@ -1,0 +1,45 @@
+- name: installing openjdk
+  get_url:
+    url: "{{ art_url }}"
+    url_username: "{{ art_username }}"
+    url_password: "{{ art_password }}"
+    dest: "{{ openjdk_artifacts_dl_dest_dir }}"
+    mode: 0700
+    force_basic_auth: yes
+
+- name: ensure java directory exist
+  file:
+    path: "{{ java_directory }}"
+    state: directory
+
+- name: unarchive java file
+  unarchive:
+    src: "{{ java_src }}"
+    dest: "{{ java_directory }}"
+    extra_opts: [--strip-components=1]
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Alternatives Java link created
+  alternatives:
+    name: java
+    link: /usr/bin/java
+    path: "{{ alt_java_link }}"
+    priority: 1
+
+- name: Alternatives Javac link created
+  alternatives:
+    name: javac
+    link: /usr/bin/javac
+    path: "{{ alt_java_link_c }}"
+    priority: 1
+- name: Update Profile with Java Home variable
+  lineinfile:
+    path: /etc/profile
+    state: present
+    line: "{{ item }}"
+  with_items:
+    - 'export JAVA_HOME="{{ java_directory }}"'
+    - 'export PATH=$PATH:$JAVA_HOME/bin'

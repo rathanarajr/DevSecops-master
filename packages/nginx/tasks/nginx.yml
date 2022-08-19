@@ -1,0 +1,25 @@
+- name: Enable nginx:{{ pkg.version }} module
+  command: yum -y module enable nginx:{{ pkg.version }}
+
+- name: Ensure nginx is installed.
+  package:
+    name: nginx
+    state: present
+
+- name: Set Files Folder path
+  set_fact:
+      conf_files: "../configs/{{ target_env }}/appsets/{{ target_app }}/files"
+
+- name: Copy nginx configuration in place.
+  copy:
+    src: '../files/nginx.conf'
+    dest: '/etc/nginx/'
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Enable nginx
+  command: systemctl enable nginx
+
+- name: reload nginx
+  service: name=nginx state=reloaded

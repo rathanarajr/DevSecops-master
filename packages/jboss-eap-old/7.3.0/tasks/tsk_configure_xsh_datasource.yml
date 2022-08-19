@@ -1,0 +1,64 @@
+- name: Set variables to xsh datasource
+  set_fact:
+    datasource_path: "{{ vars[ target_env + '_' + target_app + '_' + item + '_datasource_path'] }}"
+    datasource_jndiname_{{ item }}: "{{ vars[ target_env + '_' + target_app + '_' + item + '_datasource_jndiname'] }}"
+    datasource_name_{{ item }}: "{{ vars[ target_env + '_' + target_app + '_' + item + '_datasource_name'] }}"
+    datasource_portnumber_{{ item }}: "{{ vars[ target_env + '_' + target_app + '_' + item + '_datasource_portnumber'] }}"
+    datasource_servername_{{ item }}: "{{ vars[ target_env + '_' + target_app + '_' + item + '_datasource_servername'] }}"
+    datasource_urlname_{{ item }}: "{{ vars[ target_env + '_' + target_app + '_' + item + '_datasource_urlname'] }}"
+    datasource_minsize_{{ item }}: "{{ vars[ target_env + '_' + target_app + '_' + item + '_datasource_minsize'] }}"
+    datasource_initsize_{{ item }}: "{{ vars[ target_env + '_' + target_app + '_' + item + '_datasource_initsize'] }}"
+    datasource_maxsize_{{ item }}: "{{ vars[ target_env + '_' + target_app + '_' + item + '_datasource_maxsize'] }}"
+    datasource_sec_uname_{{ item }}: "{{ vars[ target_env + '_' + target_app + '_' + item + '_datasource_sec_uname'] }}"
+    datasource_sec_passwd_{{ item }}: "{{ vars[ target_env + '_' + target_app + '_' + item + '_datasource_sec_passwd'] }}"
+  with_items:
+    - iamreferdata
+    - dmsdata
+    - referdata
+  
+- name: Insert XSH datasource surrounded by custom markers
+  blockinfile:
+    path: "{{ datasource_path }}"
+    marker: "<!-- Insert XSH datasource for {{ target_app }} {{ item }} -->"
+    insertafter: "</datasource>"
+    block: |
+      <xa-datasource jndi-name="{{ vars[ 'datasource_jndiname_' + item] }}" pool-name="{{ vars[ 'datasource_name_' + item] }}" enabled="true">
+            <xa-datasource-property name="PortNumber">
+                                    {{ vars[ 'datasource_portnumber_' + item] }}
+                                </xa-datasource-property>
+            <xa-datasource-property name="ServerName">
+                                    {{ vars[ 'datasource_servername_' + item] }}
+                              </xa-datasource-property>
+            <xa-datasource-property name="URL">
+                                    {{ vars[ 'datasource_urlname_' + item] }}
+                                </xa-datasource-property>
+            <xa-datasource-class>oracle.jdbc.xa.client.OracleXADataSource</xa-datasource-class>
+            <driver>oracle</driver>
+            <xa-pool>
+                <min-pool-size>{{ vars[ 'datasource_minsize_' + item] }}</min-pool-size>
+                <initial-pool-size>{{ vars[ 'datasource_initsize_' + item] }}</initial-pool-size>
+                <max-pool-size>{{ vars[ 'datasource_maxsize_' + item] }}</max-pool-size>
+            </xa-pool>
+            <security>
+                <user-name>{{ vars[ 'datasource_sec_uname_' + item] }}</user-name>
+                <password>{{ vars[ 'datasource_sec_passwd_' + item] }}</password>
+            </security>
+            <validation>
+                <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker"/>
+                <background-validation>true</background-validation>
+                <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter"/>
+            </validation>
+      </xa-datasource>
+  with_items:
+    - iamreferdata
+    - dmsdata
+    - referdata
+  when: target_app == "XA0165"
+
+
+- name: This command will change the working directory to somedir/.
+  shell:
+    cmd: xmllint --format standalone.xml
+    chdir: "{{ destination_path }}"
+  when: target_app == "XA0165"
+

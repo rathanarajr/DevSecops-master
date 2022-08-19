@@ -1,0 +1,16 @@
+#Task to Uninstall Redis
+
+- name: Removing the Redis Configuration
+  lineinfile:
+     path: /etc/redis.conf
+     state: absent
+     regexp: 'bind 127.0.0.1'
+     line: 'bind 0.0.0.0'
+
+- name: Ensure Redis is stopped
+  service:
+    name: redis
+    state: stopped
+
+- name: Redis link removed
+  command: yum remove redis -y

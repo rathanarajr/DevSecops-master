@@ -1,0 +1,131 @@
+#Task to install Jboss ActiveMQ
+
+
+- name: Download Jboss Active MQ
+  get_url:
+          url: "{{ art_url }}/temp/{{ activeMQ_pkg }}"
+          url_username: "{{ art_id }}"
+          url_password: "{{ art_password }}"
+          dest: "{{ download_folder }}"
+          mode: 0644
+          force_basic_auth: yes
+
+- name: Unarchive ActiveMQ file
+  unarchive:
+          src: /{{ download_folder }}/{{ activeMQ_pkg }}
+          dest: /mnt1/app
+          remote_src: yes
+          list_files: true
+  register: output
+
+- name: Rename ActiveMQ Folder
+  command:
+          mv /mnt1/app/{{ output.files[0].split('/')[0] }} /mnt1/app/amq-broker
+
+- name: Change permission for amq-broker folder
+  file:
+          path: /mnt1/app/amq-broker
+          mode: 0755
+
+- name: Change ownership for amq-broker folder
+  file:
+          path: /mnt1/app/amq-broker
+          owner: smroot
+          group: smroot
+          recurse: yes
+
+- name: ensure ActiveMQ a broker instance Directory Exist
+  file:
+          path: /mnt1/app/amq-broker/broker
+          state: directory
+          mode: 0755
+          owner: smroot
+          group: smroot
+
+- name: Create broker Master instance
+  become: yes
+  become_user: smroot
+  shell:
+          chdir: /mnt1/app/amq-broker/broker
+          cmd: /mnt1/app/amq-broker/bin/artemis create master --name master --user admin --password admin --allow-anonymous
+  when: AMQ_job == "master"
+
+- name: Edit Master bootsrap.xml file
+  become_user: smroot
+  lineinfile:
+          path: /mnt1/app/amq-broker/broker/master/etc/bootstrap.xml
+          regexp: '<web bind="http://localhost:8161" path="web">'
+          line: '<web bind="http://0.0.0.0:8161" path="web">'
+  when: AMQ_job == "master"
+
+- name: Edit Master jolokia-access.xml file
+  become_user: smroot
+  lineinfile:
+          path: /mnt1/app/amq-broker/broker/master/etc/jolokia-access.xml
+          regexp: '://localhost*'
+          line: '<allow-origin>*://*</allow-origin>'
+  when: AMQ_job == "master"
+
+- name: Add proxy whitelist to Master artemis.profile file
+  become_user: smroot
+  lineinfile:
+          path: /mnt1/app/amq-broker/broker/master/etc/artemis.profile
+          regexp: 'JAVA_ARGS=" -XX:'
+          line: 'JAVA_ARGS=" -XX:+PrintClassHistogram -XX:+UseG1GC -Xms512M -Xmx2G -Dhawtio.realm=activemq  -Dhawtio.offline=true -Dhawtio.role=amq -Dhawtio.rolePrincipalClasses=org.apache.activemq.artemis.spi.core.security.jaas.RolePrincipal -Djolokia.policyLocation=${ARTEMIS_INSTANCE_ETC_URI}jolokia-access.xml -Djon.id=amq -Dhawtio.proxyWhitelist=0.0.0.0"'
+  when: AMQ_job == "master"
+
+- name: Rum Master Artmis
+  become: yes
+  become_user: smroot
+  shell:
+          cmd: "nohup /mnt1/app/amq-broker/broker/master/bin/artemis-service start"
+  when: AMQ_job == "master"
+
+- name: Create broker Slave instance
+  become: yes
+  become_user: smroot
+  shell:
+          chdir: /mnt1/app/amq-broker/broker
+          cmd: /mnt1/app/amq-broker/bin/artemis create slave --name slave --user admin --password admin --allow-anonymous --port-offset 1
+  when: AMQ_job == "slave"
+
+
+- name: Edit Slave bootsrap.xml file
+  become_user: smroot
+  lineinfile:
+          path: /mnt1/app/amq-broker/broker/slave/etc/bootstrap.xml
+          regexp: '<web bind="http://localhost:8162" path="web">'
+          line: '<web bind="http://0.0.0.0:8162" path="web">'
+  when: AMQ_job == "slave"
+
+- name: Edit Slave jolokia-access.xml file
+  become_user: smroot
+  lineinfile:
+          path: /mnt1/app/amq-broker/broker/slave/etc/jolokia-access.xml
+          regexp: '://localhost*'
+          line: '<allow-origin>*://*</allow-origin>'
+  when: AMQ_job == "slave"
+
+- name: Add proxy whitelist to Slave artemis.profile file
+  become_user: smroot
+  lineinfile:
+          path: /mnt1/app/amq-broker/broker/slave/etc/artemis.profile
+          regexp: 'JAVA_ARGS=" -XX:'
+          line: 'JAVA_ARGS=" -XX:+PrintClassHistogram -XX:+UseG1GC -Xms512M -Xmx2G -Dhawtio.realm=activemq  -Dhawtio.offline=true -Dhawtio.role=amq -Dhawtio.rolePrincipalClasses=org.apache.activemq.artemis.spi.core.security.jaas.RolePrincipal -Djolokia.policyLocation=${ARTEMIS_INSTANCE_ETC_URI}jolokia-access.xml -Djon.id=amq -Dhawtio.proxyWhitelist=0.0.0.0"'
+  when: AMQ_job == "slave"
+
+- name: Edit Slave broker.xml file
+  become_user: smroot
+  lineinfile:
+          path: /mnt1/app/amq-broker/broker/slave/etc/broker.xml
+          regexp: '<acceptor name="artemis">tcp://0.0.0.0:616'
+          line: '<acceptor name="artemis">tcp://0.0.0.0:61617?tcpSendBufferSize=1048576;tcpReceiveBufferSize=1048576;amqpMinLargeMessageSize=102400;protocols=CORE,AMQP,STOMP,HORNETQ,MQTT,OPENWIRE;useEpoll=true;amqpCredits=1000;amqpLowCredits=300;amqpDuplicateDetection=true</acceptor>'
+  when: AMQ_job == "slave"
+
+- name: Rum Slave Artmis
+  become: yes
+  become_user: smroot
+  shell:
+          cmd: "nohup /mnt1/app/amq-broker/broker/slave/bin/artemis-service start"
+  when: AMQ_job == "slave"
+  

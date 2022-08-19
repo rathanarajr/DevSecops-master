@@ -1,0 +1,12 @@
+
+- name: Check if java is installed
+  command: java -version  
+  register: java_result
+  ignore_errors: yes
+
+- name: "include base vars file"
+  include_vars: vars/basevars.yml
+
+- name: "Download and Install JAVA binaries"
+  include_tasks: tasks/tsk_openjdk_install.yml
+  when: java_result is failed

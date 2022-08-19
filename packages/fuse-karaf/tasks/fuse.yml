@@ -1,0 +1,62 @@
+#Task to install RedHat JBoss Fuse 7.10
+
+- name: "include secret.yml"
+    include_vars: vars/secret.yml
+
+- name: Set variables to username and password
+    set_fact:
+      fuse_admin_pwd: "{{ vars[ target_env + '_' + target_app + '_fuse_admin_pwd'] }}"
+      app_username: "{{ vars[ target_env + '_' + target_app + '_appuser_username'] }}"
+
+- name: print extract folder
+  debug:
+    msg: 
+      - " Extract folder is {{ extract_folder }}"
+      - " App_Username is  {{ App_Username }}"
+      - " App_folder is {{ App_folder }}"
+
+- name: Move Fuse Folder
+  command:
+    mv "{{ pkg_folder }}/{{ extract_folder }}/" "{{ App_folder }}"/fuse/
+    
+- name: Edit Properties file
+  lineinfile:
+          path: "{{ App_folder }}/fuse/etc/users.properties"
+          state: present
+          line: "{{ item }}"
+  with_items:
+          - 'admin = {{ fuse_admin_pwd }},_g_:admingroup'
+          - '_g_\:admingroup = group,admin,manager,viewer,systembundles,ssh'
+
+# - name: Change port Number
+#   lineinfile:
+#           path: "/{{ App_folder }}/fuse/etc/org.ops4j.pax.web.cfg"
+#           regexp: 'org.osgi.service.http.port = 8181'
+#           line: 'org.osgi.service.http.port = 8181'
+
+- name: Disable Certificate Check
+  lineinfile:
+          path: "/{{ App_folder }}/fuse/etc/org.ops4j.pax.url.mvn.cfg"
+          regexp: 'org.ops4j.pax.url.mvn.certificateCheck = true'
+          line: 'org.ops4j.pax.url.mvn.certificateCheck = false'
+
+- name: Set Proxy for fuse
+  copy:
+          src: ../vars/maven-settings.xml
+          dest: "/{{ App_folder }}/fuse/etc/maven-settings.xml"
+          mode: '0644'
+          owner: "{{ App_Username }}"
+          group: "{{ App_Username }}"
+
+- name: Change Owner of Fuse Dir
+  file:
+          path:  "{{ App_folder }}/fuse"
+          owner:  "{{ App_Username }}"
+          group:  "{{ App_Username }}"
+          recurse: yes
+
+- name: start fuse
+  become:  yes
+  become_user: "{{ App_Username }}"
+  command:
+          "nohup /{{ App_folder }}/fuse/bin/start &"

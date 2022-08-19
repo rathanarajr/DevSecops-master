@@ -1,0 +1,50 @@
+art_id: "svc-lmcp-devsecops"
+art_password: "XTRdtdf$%&%*&^4312434657GYVUYrdyttY"
+art_url: "https://artifactory.dxc.com:443/artifactory/lmcp-devsecops/"
+download_folder: "/tmp"
+App_folder: "/mnt1/app"
+Bravo_Username: "smroot"
+Bravo_User_Pass: "Welcome@2022"
+activeMQ_pkg: "amq-broker-7.7.0-bin.zip"
+activeMQ_password: "amq-broker"
+fuse_pkg: "fuse-karaf-7.10.0.zip"
+fuse_folder: "fuse"
+fuse_password: "fuse"
+fuse_admin_pwd: "fuse@admin"
+Redis_Version: 5.0.3
+#root_group: root
+nginx_conf_path: /etc/nginx/conf.d
+nginx_conf_file_path: /etc/nginx/nginx.conf
+# nginx_mime_file_path: /etc/nginx/mime.types
+# nginx_pidfile: /var/run/nginx.pid
+#__nginx_user: "nginx"
+
+java:
+        version:
+                8:
+                        yum_name: "java-1.8.0-openjdk-devel"
+                        yum_package: "java-1.8.0-openjdk"
+                        zip_pkg: "java-1.8.0-openjdk-portable-1.8.0.312.b07-1.portable.jdk.el.x86_64.tar.xz"
+                        zip_folder: "java-8-openjdk"
+                11:
+                        yum_name: "java-11-openjdk-devel"
+                        yum_package: "java-11-openjdk"
+                        zip_pkg: "java-11-openjdk-11.0.13.0.8-1.portable.jdk.el.x86_64.tar.xz"
+                        zip_folder: "java-11-openjdk"
+apache_maven:
+        version:
+                3.8.4:
+                        zip_pkg: "apache-maven-3.8.4-bin.tar.gz"
+                        zip_folder: "maven"
+                3.8.3:
+                        zip_pkg: "apache-maven-3.8.3-bin.tar.gz"
+                        zip_folder: "maven"
+jboss_eap:
+        user: "jboss_as"
+        group: "jboss_as"
+        password: "jboss_as"
+        version: "7.4.0"
+        zip_pkg: "jboss-eap-7.4.0.zip"
+        zip_folder: "jboss-eap"
+        admin_user: "admin"
+        admin_password: "admin"

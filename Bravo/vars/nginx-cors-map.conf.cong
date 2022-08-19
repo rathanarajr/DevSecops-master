@@ -1,0 +1,24 @@
+map $http_origin $allow_origin {
+  default "";
+  "~^http?://(?:[^/]*\.)?(10\.(?:com|local))(?::[0-9]+)?$" "$http_origin";
+}
+
+map $request_method $cors_method {
+  default "allowed";
+  "OPTIONS" "preflight";
+}
+
+map $cors_method $cors_max_age {
+  default "";
+  "preflight" 1728000;
+}
+
+map $cors_method $cors_allow_methods {
+  default "";
+  "preflight" "GET, POST, OPTIONS";
+}
+
+map $cors_method $cors_allow_headers {
+  default "";
+  "preflight" "Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,Keep-Alive,X-Requested-With,If-Modified-Since,xchangingsso";
+}

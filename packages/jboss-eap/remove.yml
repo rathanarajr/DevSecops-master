@@ -1,0 +1,43 @@
+- name: "include base vars file"
+  include_vars: vars/basevars.yml
+  
+- name: check services
+  service_facts:
+  register: ser_status
+
+#- name: print outbut
+-  debug: var=ser_status
+#          var: ser_status
+
+- name: print service status
+  set_fact:
+            status: "{{ ansible_facts.services['jboss-eap-rhel.service'].state }}"
+
+- name: stop the service, if runnig 
+  service:
+    name: jboss-eap-rhel.service
+    state: stopped
+  when: status == "running"
+
+- name: remove jboss-eap
+  command: "rm -rf {{ jboss_eap_home_dir_name }}"
+  args:
+    chdir: "{{ jboss_eap_artifacts_dl_dest_dir }}"
+
+
+- name: remove jboss-eap.conf
+  command: rm -rf jboss-eap.conf
+  args:
+    chdir: "{{ jboss_eap_service_conf_dir }}"
+
+
+- name: remove jboss-eap-rhel.sh
+  command: rm -rf jboss-eap-rhel.sh
+  args:
+    chdir: "{{ jboss_eap_etc_initd_dir }}"
+
+
+- name: remove jboss zip file
+  command: rm -rf jboss-eap-7.3.0.zip
+  args:
+    chdir: "{{ jboss_eap_artifacts_dl_dest_dir }}"

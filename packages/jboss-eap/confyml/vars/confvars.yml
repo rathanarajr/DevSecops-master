@@ -1,0 +1,135 @@
+
+## Custom Vars ##
+
+modules_path: "{{ jboss_eap_library_dest_dir }}/modules"
+oracle_url: https://artifactory.dxc.com/artifactory/lmcp-devsecops/temp/oracle.zip
+com_folder: "{{ modules_path }}/com"
+oracle_source: "{{ com_folder }}/oracle.zip"
+module_xml_file: "{{ com_folder }}/oracle/jdbc/main/module.xml"
+jar_path: "{{ com_folder }}/oracle/jdbc/main/ojdbc8-21.1.0.0.jar"
+
+datasource_path: "{{ jboss_eap_library_dest_dir }}/standalone/configuration/standalone.xml"
+
+server_url: tcp://10.145.2.215:61616
+destination_path: "{{ jboss_eap_library_dest_dir }}/standalone/configuration"
+jboss_eap_default_config: standalone.xml
+rar_destination: "{{ jboss_eap_library_dest_dir }}/standalone/deployments/"
+rar_destination_path: "{{ jboss_eap_artifacts_dl_dest_dir }}/amq-rar/legacyactivemq"
+rar_archive_path: "{{ jboss_eap_artifacts_dl_dest_dir }}/dev/legacyactivemq.zip"
+rar_path: "{{ jboss_eap_artifacts_dl_dest_dir }}/legacyactivemq.rar"
+rar_directory: "{{ jboss_eap_artifacts_dl_dest_dir }}/dev"
+datasource_url: "https://artifactory.dxc.com/artifactory/lmcp-devsecops/packages/amq/5.16.3/legacyactivemq.rar"
+legacy_source: "{{ rar_destination_path }}/legacyactivemq.rar"
+
+eclipse_file_url: "https://artifactory.dxc.com:443/artifactory/lmcp-devsecops/temp/eclipselink-2.7.8.jar"
+eclipse_file_destination: "{{ jboss_eap_library_dest_dir }}/modules/system/layers/base/org/eclipse/persistence/main/"
+eclipse_file_homedir: "{{ eclipse_file_destination }}/eclipselink-2.7.8.jar"
+
+eclipse_path: "{{ jboss_eap_library_dest_dir }}/modules/system/layers/base/org/eclipse/persistence/main/module.xml"
+
+bind_address: 10.15.172.44
+bind_address_management: 0.0.0.0
+bind_address_public: 0.0.0.0
+
+server_validation_cmd: '{{ jboss_eap_library_dest_dir }}/bin/jboss-cli.sh -c --commands="read-attribute server-state"'
+rar_validation_cmd: '{{ jboss_eap_library_dest_dir }}/bin/jboss-cli.sh -c --commands="cd deployment,cd legacyactivemq.rar, read-attribute status"'
+
+datasource_name_value: referenceData
+validation_cmd: '{{ jboss_eap_library_dest_dir }}/bin/jboss-cli.sh --controller=localhost:9990 --connect --user={{ jboss_eap_admin_user }} --password={{ jboss_eap_admin_password }} -c /subsystem=datasources/xa-data-source={{ datasource_name_value }}:test-connection-in-pool'
+
+
+########################################################################
+###Not used vars
+#  jboss_eap:
+#   user: "jboss_as"
+#   group: "jboss_as"
+#   password: "jboss_as"
+#   version: "7.4.0"
+#   admin_user: "admin"
+#   admin_password: "admin"
+# Jboss_eap_HOME: "/opt/jboss_eap-{{ jboss_eap.version }}"
+# jboss_eap_artifact_source: https://artifactory.dxc.com:443/artifactory/lmcp-devsecops/temp/
+# jboss_eap_patch_artifact_source: https://access.redhat.com/jbossnetwork/restricted/softwareDownload.html?softwareId=57891
+
+
+# #####################################################
+
+# #jboss_eap_name_version: jboss-eap-7.3
+# jboss_eap_base_version: 7.3
+# #######################################
+
+
+
+# jboss_eap_artifact_name: "{{ jboss_eap_base_directory_name }}.zip"
+# jboss_eap_bin_dir_path: "/data{{ jboss_eap_artifact_name }}"
+# jboss_eap_patch_artifact_name: jboss-eap-7.1.2-patch.zip
+# jboss_eap_standalone_backup_dir_name: .standalone
+# jboss_eap_home": "/opt/jboss-eap-7.3"
+
+# art_username: "svc-lmcp-devsecops"
+# art_password: "XTRdtdf$%&%*&^4312434657GYVUYrdyttY"
+
+
+
+# az_rhel_adminuser: "azureuser"
+# az_rhel_vm_key: "/opt/private_key/UKIMDLMALEAP101_key.pem"
+
+# az_rhel_adminuser: "cloudos"
+# z_rhel_vm_key: "/opt/private_key/UKIPULMALAPPE101_PUB.pem"
+# az_rhel_admin_pass: "xhG>(`V;5`!L~4GUs*q00hT~ogn2SIsY"
+
+# jboss_eap_default_logging_timezone: America/New_York
+
+# jboss_eap_default_mode: standalone
+# jboss_eap_bind_default_web_address: 0.0.0.0
+# jboss_eap_bind_default_management_address: 0.0.0.0
+# jboss_eap_default_http_port: 8080
+# jboss_eap_default_management_port: 9990
+
+# TODO: Reenable patch
+# jboss_eap_apply_patch: true
+
+# rarfile_path: "{{ rar_destination_path }}"
+
+
+# jboss_eap_service_log_dir: "/var/log"
+# jboss_eap_service_data_dir: "/var/run"
+
+# #jboss_instances:
+# #  - name: jboss-eap
+
+
+# # ussually this is set at the playbook level
+# #transfer_method: # csp-to-host | copy-from-contoller | url
+
+# #pull the standalone.xml file from jfrog
+# #datasource_url: https://artifactory.dxc.com/artifactory/lmcp-devsecops/temp/standalone.xml
+
+
+# # this is used for adding datasource file
+
+
+# # this is used for push oracle jar into jboss_home folder
+
+
+
+
+
+
+
+# # used for restart the jboss service
+
+# # used for datasource validation purpose
+
+
+
+
+# #zipfile_destinaiton: "/data/dev/legacyactivemq.zip"
+# #rar_destination: "/data/legacyactivemq.rar"
+# jboss_eap_base_directory_name: jboss-eap-7.3.0
+# #rar_destination: {{ jboss_eap_artifacts_dl_dest_dir }}/{{ jboss_eap_base_directory_name }}/standalone/deployments/legacyactivemq.rar
+
+
+
+
+

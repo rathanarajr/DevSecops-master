@@ -1,0 +1,4 @@
+extract_folder: "{{ pkg_file.split('/')[0] }}"
+App_folder: "{{ app_folders.[0] }}"
+
+

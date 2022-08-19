@@ -1,0 +1,71 @@
+#Task to install RedHat JBoss Fuse 7.10
+
+- name: Download RedHat JBoss Fuse 7.10
+  get_url:
+          url: "{{ art_url }}/temp/{{ fuse_pkg }}"
+          url_username: "{{ art_id }}"
+          url_password: "{{ art_password }}"
+          dest: /tmp
+          mode: 0700
+          owner: fuse
+          group: fuse
+          force_basic_auth: yes
+          timeout: 300
+
+- name: Unarcive Fuse file
+  unarchive:
+          src: /tmp/{{ fuse_pkg }}
+          dest: "{{ App_folder }}"
+          remote_src: yes
+          list_files: true
+  register: output
+
+- name: Rename Fuse Folder
+  command:
+          "mv /{{ App_folder }}/{{ output.files[0].split('/')[0] }} /{{ App_folder }}/fuse"
+
+- name: Edit Properties file
+  lineinfile:
+          path: "/{{ App_folder }}/fuse/etc/users.properties"
+          state: present
+          line: "{{ item }}"
+  with_items:
+          - 'admin = {{ fuse_admin_pwd }},_g_:admingroup'
+          - '_g_\:admingroup = group,admin,manager,viewer,systembundles,ssh'
+
+- name: Change port Number
+  lineinfile:
+          path: "/{{ App_folder }}/fuse/etc/org.ops4j.pax.web.cfg"
+          regexp: 'org.osgi.service.http.port = 8181'
+          line: 'org.osgi.service.http.port = 8181'
+
+- name: Disable Certificate Check
+  lineinfile:
+          path: "/{{ App_folder }}/fuse/etc/org.ops4j.pax.url.mvn.cfg"
+          regexp: 'org.ops4j.pax.url.mvn.certificateCheck = true'
+          line: 'org.ops4j.pax.url.mvn.certificateCheck = false'
+
+- name: Set Proxy for fuse
+  copy:
+          src: vars/maven-settings.xml
+          dest: "/{{ App_folder }}/fuse/etc/maven-settings.xml"
+          mode: '0644'
+          owner: "{{ Bravo_Username }}"
+          group: "{{ Bravo_Username }}"
+
+- name: Change Owner of Fuse Dir
+  file:
+          path:  "{{ App_folder }}/fuse"
+          owner:  "{{ Bravo_Username }}"
+          group:  "{{ Bravo_Username }}"
+          recurse: yes
+
+- name: start fuse
+  become:  "{{ Bravo_Username }}"
+  command:
+          "nohup /{{ App_folder }}/fuse/bin/start &"
+
+- name: Delete Fuse Package File
+  file:
+          path: "{{ download_folder }}/{{ fuse_pkg }}"
+          state: absent

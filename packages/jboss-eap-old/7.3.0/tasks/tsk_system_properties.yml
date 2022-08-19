@@ -1,0 +1,10 @@
+- name: Insert XML for BeanManager extension surrounded by custom markers
+  blockinfile:
+    path: "{{ datasource_path }}"
+    marker: "<!-- Add system propeties for BeanManager extensions -->"
+    insertafter: "</extensions>"
+    backup: no
+    block: |
+      <system-properties>
+         <property name="com.sun.jersey.server.impl.cdi.lookupExtensionInBeanManager" value="true"/>
+      </system-properties>

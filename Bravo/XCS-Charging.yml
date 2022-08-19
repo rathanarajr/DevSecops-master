@@ -1,0 +1,61 @@
+#Script to Prepare XCS-CHARGING Servers dependencies
+
+- name: Install prerequisites
+  hosts: XCS-CHARGING
+  vars:
+          java_version: "11"
+  vars_files:
+        - vars/base.yml
+  tasks:
+  - name: Install wget & yum-utils
+    yum:
+        name:
+                - wget
+                - git
+                - yum-utils
+                -  yum-plugin-versionlock
+        state: latest
+
+  - name: Add App Group
+    group:
+          name: "{{ Bravo_Username }}"
+          state: present
+
+  - name: Create App User
+    user:
+          name: "{{ Bravo_Username }}"
+          password: "{{ Bravo_User_Pass | password_hash('sha512') }}"
+          shell: /bin/bash
+          state: present
+          group: "{{ Bravo_Username }}"
+          groups: wheel
+
+  - name: Create App folder
+    file:
+          path: "{{ App_folder }}"
+          state: directory
+          owner: "{{ Bravo_Username }}"
+          group: "{{ Bravo_Username }}"
+          recurse: yes
+
+  - name: Add Proxy settings
+    lineinfile:
+          path: /etc/profile
+          state: present
+          line: "{{ item }}"
+    with_items:
+          - ' '
+          - 'PROXY_URL="http://10.16.32.17:8080/"'
+          - 'export http_proxy="$PROXY_URL"'
+          - 'export https_proxy="$PROXY_URL"'
+          - 'export ftp_proxy="$PROXY_URL"'
+          - 'export no_proxy="127.0.0.1,localhost"'
+          - ' '
+          - 'export HTTP_PROXY="$PROXY_URL"'
+          - 'export HTTPS_PROXY="$PROXY_URL"'
+          - 'export FTP_PROXY="$PROXY_URL"'
+          - 'export NO_PROXY="127.0.0.1,localhost"'
+          - ' '
+
+  - name: "Install Java  {{ java_version }} OpenJDK for XCS-CHARGING"
+    include: tasks/java.yml

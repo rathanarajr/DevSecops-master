@@ -1,0 +1,66 @@
+- name: Get Java Yum Package Name
+  set_fact:
+          Java_yum_name: "{{ pkg.package }}-{{ java_version}}-openjdk-devel"
+          Java_yum_package: "{{ pkg.package }}-{{ java_version}}-openjdk"
+
+- name: Install Java by yum
+  package:
+          name: "{{ Java_yum_name }}"
+          state: present
+
+- name: Get OpenJDK jdk package Rlease
+  shell:
+          "rpm -qi {{ Java_yum_package }} | grep 'Release' | awk '{print $NF}'"
+  register: jdk_rpm_package_release
+
+- name: Get OpenJDK jdk package architecture
+  shell:
+          "rpm -qi {{ Java_yum_package }} | grep 'Architecture' | awk '{print $NF}'"
+  register: jdk_rpm_package_arch
+
+- name: Get OpenJDK jdk package version
+  shell:
+          "rpm -qi {{ Java_yum_package }} | grep 'Version' | awk '{print $NF}'"
+  register: jdk_rpm_package_version
+
+- name: Update Profile with Java 8 Home variable
+  lineinfile:
+          path: /etc/profile
+          state: present
+          regexp: "export JAVA_HOME"
+          line: 'export JAVA_HOME="/usr/lib/jvm/{{ Java_yum_package }}-{{ jdk_rpm_package_version.stdout }}-{{ jdk_rpm_package_release.stdout }}.{{ jdk_rpm_package_arch.stdout }}/jre"'
+  when: java_version == "1.8.0"
+
+- name:  Set Java Alternatives for java 8
+  alternatives:
+          name: java
+          path: /usr/lib/jvm/{{ Java_yum_package }}-{{ jdk_rpm_package_version.stdout }}-{{ jdk_rpm_package_release.stdout }}.{{ jdk_rpm_package_arch.stdout }}/jre/bin/java
+  when: java_version == "1.8.0"
+
+- name: Update Profile with Java 11 Home variable
+  lineinfile:
+          path: /etc/profile
+          state: present
+          regexp: "export JAVA_HOME"
+          line: 'export JAVA_HOME="/usr/lib/jvm/{{ Java_yum_package }}-{{ jdk_rpm_package_version.stdout }}-{{ jdk_rpm_package_release.stdout }}.{{ jdk_rpm_package_arch.stdout }}"'
+  when: java_version == "11"
+
+- name:  Set Java Alternatives for java 11
+  alternatives:
+          name: java
+          path: /usr/lib/jvm/{{ Java_yum_package }}-{{ jdk_rpm_package_version.stdout }}-{{ jdk_rpm_package_release.stdout }}.{{ jdk_rpm_package_arch.stdout }}/bin/java
+  when: java_version == "11"
+
+- name: Update Path with Java Home variable
+  lineinfile:
+          path: /etc/profile
+          line: 'export PATH=$PATH:$JAVA_HOME/bin'
+
+- name: Source Profile File
+  shell:
+          cmd: source /etc/profile
+
+# - name: Lock Java from being updated
+#   community.general.yum_versionlock:
+#      state: present
+#      name: "{{ Java_yum_name }}"

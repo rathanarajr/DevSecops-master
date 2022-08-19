@@ -1,0 +1,50 @@
+---
+- hosts: '{{ target }}'
+  gather_facts: yes
+  become: true
+
+  vars:
+    globalpkglist: "../configs/{{ target_env }}/globalpkgs/packages.cfg"
+    defaultpkglist: "../configs/{{ target_env }}/appsets/{{ target_app }}/defaultpkgs/packages.cfg"
+
+  tasks:
+
+  - name: Validate variable files
+    delegate_to: localhost
+    stat:
+      path: "{{item}}"
+    with_fileglob:
+      - "{{ globalpkglist }}"
+      - "{{ defaultpkglist }}"
+      - "../configs/{{ target_env }}/appsets/{{ target_app }}/{{ target_config }}"
+    register: variables_stat
+
+  - name: Include all variable files (only when found)
+    include_vars : "{{item.stat.path}}"
+    when         : item.stat.exists
+    with_items   : "{{variables_stat.results}}"
+    no_log       : true
+
+  - name: "The following global packages are to be installed"
+    include_tasks: 'includes/install_packages.yml'
+    with_items:
+      - "{{ globalpackages }}"
+    loop_control:
+      loop_var: pkg
+    when: globalpackages is defined
+
+  - name: "The following default packages are to be installed"
+    include_tasks: 'includes/install_packages.yml'
+    with_items:
+      - "{{ defaultpackages }}"
+    loop_control:
+      loop_var: pkg
+    when: defaultpackages is defined
+
+  - name: "The following client packages are to be installed"
+    include_tasks: 'includes/install_packages.yml'
+    with_items:
+      - "{{ packages }}"
+    loop_control:
+      loop_var: pkg
+    when: packages is defined

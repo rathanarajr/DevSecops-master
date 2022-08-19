@@ -1,0 +1,5 @@
+- name: "include base vars file"
+  include_vars: vars/basevars.yml
+
+- name: "installing redis"
+  include_tasks: tasks/redis_uninstall.yml

@@ -1,0 +1,141 @@
+#Task to install Jboss ActiveMQ
+  
+- name: "include secret.yml"
+    include_vars: vars/secret.yml
+
+- name: Set variables to username and password
+    set_fact:
+      App_username: "{{ vars[ target_env + '_' + target_app + '_appuser_username'] }}"
+      activeMQ_pwd: "{{ vars[ target_env + '_' + target_app + '_AMQ_password'] }}"
+  
+- name: print extract folder
+  debug:
+    msg: 
+      - " Extract folder is {{ extract_folder }}"
+      - " App_Username is  {{ App_Username }}"
+      - " App_folder is {{ App_folder }}"
+      - "nohup {{ App_folder }}/amq-broker/broker/master/bin/artemis-service start &"
+
+- name: Rename ActiveMQ Folder
+  command:
+          mv "{{ pkg_folder }}/{{ extract_folder }}/" "{{ App_folder }}"/amq-broker
+
+- name: Change permission for amq-broker folder
+  file:
+          path: "{{ App_folder }}/amq-broker"
+          mode: 0755
+
+- name: Change ownership for amq-broker folder
+  file:
+          path: "{{ App_folder }}/amq-broker"
+          owner: "{{ App_Username }}"
+          group: "{{ App_Username }}"
+          recurse: yes
+
+- name: ensure ActiveMQ a broker instance Directory Exist
+  file:
+          path: "{{ App_folder }}/amq-broker/broker"
+          state: directory
+          mode: 0755
+          owner: "{{ App_Username }}"
+          group: "{{ App_Username }}"
+
+- name: Create broker Master instance
+  become: yes
+  become_user: "{{ App_Username }}"
+  shell:
+          chdir: "{{ App_folder }}/amq-broker/broker"
+          cmd: "{{ App_folder }}/amq-broker/bin/artemis create master --name master --user admin --password {{ activeMQ_pwd }} --allow-anonymous"
+  when: AMQ_job == "master"
+
+- name: Edit Master bootsrap.xml file
+  become_user: "{{ App_Username }}"
+  lineinfile:
+          path: "{{ App_folder }}/amq-broker/broker/master/etc/bootstrap.xml"
+          regexp: '<web bind="http://localhost:8161" path="web">'
+          line: '<web bind="http://0.0.0.0:{{ bootstrap_port }}" path="web">'
+  when: AMQ_job == "master"
+
+- name: Edit Master jolokia-access.xml file
+  become_user: "{{ App_Username }}"
+  lineinfile:
+          path: "{{ App_folder }}/amq-broker/broker/master/etc/jolokia-access.xml"
+          regexp: '://localhost*'
+          line: '<allow-origin>*://*</allow-origin>'
+  when: AMQ_job == "master"
+
+- name: Add proxy whitelist to Master artemis.profile file
+  become_user: "{{ App_Username }}"
+  lineinfile:
+          path: "{{ App_folder }}/amq-broker/broker/master/etc/artemis.profile"
+          regexp: 'JAVA_ARGS=" -XX:'
+          line: 'JAVA_ARGS=" -XX:+PrintClassHistogram -XX:+UseG1GC -Xms512M -Xmx2G -Dhawtio.realm=activemq  -Dhawtio.offline=true -Dhawtio.role=amq -Dhawtio.rolePrincipalClasses=org.apache.activemq.artemis.spi.core.security.jaas.RolePrincipal -Djolokia.policyLocation=${ARTEMIS_INSTANCE_ETC_URI}jolokia-access.xml -Djon.id=amq -Dhawtio.proxyWhitelist=0.0.0.0"'
+  when: AMQ_job == "master"
+
+- name: Edit master broker.xml file
+  become_user: "{{ App_Username }}"
+  lineinfile:
+          path: "{{ App_folder }}/amq-broker/broker/master/etc/broker.xml"
+          regexp: '<acceptor name="artemis">tcp://0.0.0.0:61616'
+          line: '<acceptor name="artemis">tcp://0.0.0.0:{{ broker_port }}?tcpSendBufferSize=1048576;tcpReceiveBufferSize=1048576;amqpMinLargeMessageSize=102400;protocols=CORE,AMQP,STOMP,HORNETQ,MQTT,OPENWIRE;useEpoll=true;amqpCredits=1000;amqpLowCredits=300;amqpDuplicateDetection=true</acceptor>'
+  when: AMQ_job == "master"  
+
+- name: Rum Master Artmis
+  become: yes
+  become_user: "{{ App_Username }}"
+  shell:
+          cmd: "nohup {{ App_folder }}/amq-broker/broker/master/bin/artemis-service start &"
+  when: AMQ_job == "master"
+  register: AMQ_output
+
+- name: print start outbut
+  debug:
+    var: AMQ_output
+
+- name: Create broker Slave instance
+  become: yes
+  become_user: "{{ App_Username }}"
+  shell:
+          chdir: "{{ App_folder }}/amq-broker/broker"
+          cmd: "{{ App_folder }}/amq-broker/bin/artemis create slave --name slave --user admin --password {{ activeMQ_pwd }} --allow-anonymous --port-offset 1"
+  when: AMQ_job == "slave"
+
+
+- name: Edit Slave bootsrap.xml file
+  become_user: "{{ App_Username }}"
+  lineinfile:
+          path: "{{ App_folder }}/amq-broker/broker/slave/etc/bootstrap.xml"
+          regexp: '<web bind="http://localhost:8161" path="web">'
+          line: '<web bind="http://0.0.0.0:{{ bootstrap_port }}" path="web">'
+  when: AMQ_job == "slave"
+
+- name: Edit Slave jolokia-access.xml file
+  become_user: "{{ App_Username }}"
+  lineinfile:
+          path: "{{ App_folder }}/amq-broker/broker/slave/etc/jolokia-access.xml"
+          regexp: '://localhost*'
+          line: '<allow-origin>*://*</allow-origin>'
+  when: AMQ_job == "slave"
+
+- name: Add proxy whitelist to Slave artemis.profile file
+  become_user: "{{ App_Username }}"
+  lineinfile:
+          path: "{{ App_folder }}/amq-broker/broker/slave/etc/artemis.profile"
+          regexp: 'JAVA_ARGS=" -XX:'
+          line: 'JAVA_ARGS=" -XX:+PrintClassHistogram -XX:+UseG1GC -Xms512M -Xmx2G -Dhawtio.realm=activemq  -Dhawtio.offline=true -Dhawtio.role=amq -Dhawtio.rolePrincipalClasses=org.apache.activemq.artemis.spi.core.security.jaas.RolePrincipal -Djolokia.policyLocation=${ARTEMIS_INSTANCE_ETC_URI}jolokia-access.xml -Djon.id=amq -Dhawtio.proxyWhitelist=0.0.0.0"'
+  when: AMQ_job == "slave"
+
+- name: Edit Slave broker.xml file
+  become_user: "{{ App_Username }}"
+  lineinfile:
+          path: "{{ App_folder }}/amq-broker/broker/slave/etc/broker.xml"
+          regexp: '<acceptor name="artemis">tcp://0.0.0.0:61616'
+          line: '<acceptor name="artemis">tcp://0.0.0.0:{{ broker_port }}?tcpSendBufferSize=1048576;tcpReceiveBufferSize=1048576;amqpMinLargeMessageSize=102400;protocols=CORE,AMQP,STOMP,HORNETQ,MQTT,OPENWIRE;useEpoll=true;amqpCredits=1000;amqpLowCredits=300;amqpDuplicateDetection=true</acceptor>'
+  when: AMQ_job == "slave"
+
+- name: Rum Slave Artmis
+  become: yes
+  become_user: "{{ App_Username }}"
+  shell:
+          cmd: "nohup {{ App_folder }}/amq-broker/broker/slave/bin/artemis-service start &"
+  when: AMQ_job == "slave"  

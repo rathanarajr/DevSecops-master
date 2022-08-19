@@ -1,0 +1,75 @@
+
+- name: Set JBoss EAP Instance Facts
+  set_fact:
+    #jboss_eap_runtime_conf_filename: "{{ instance_mode }}-{{ instance_name }}.conf"
+    jboss_eap_service_file: "jboss-eap-rhel.sh"
+    jboss_eap_bin_dir: "{{ jboss_eap_home }}/bin"
+    jboss_eap_initd_dir: "{{ jboss_eap_home }}/bin/init.d"
+
+- name: Set JBoss EAP Service Files Facts
+  set_fact:
+    #jboss_eap_service_conf_file: "{{ jboss_eap_service_conf_dir }}/jboss-eap.conf"
+    jboss_eap_runtime_conf_src_file: "{{ jboss_eap_bin_dir }}/init.d/jboss-eap.conf"
+    jboss_eap_initd_file: "{{ jboss_eap_initd_dir }}/{{ jboss_eap_service_file }}"
+    #jboss_eap_runtime_conf_file: "{{ jboss_eap_bin_dir }}/{{ jboss_eap_runtime_conf_filename }}"
+    #jboss_eap_service_src_file: "{{ (jboss_eap_base_version is version('7.0','<')) | ternary('jboss-as-'+instance_mode+'.sh','jboss-eap-rhel.sh') }}"
+    jboss_eap_initd_service_file: "/etc/init.d/{{ jboss_eap_service_file }}"
+    #jboss_eap_pid_file: "{{ jboss_eap_service_data_dir }}/jboss-{{ instance_name }}/jboss-{{ instance_name }}.pid"
+
+- name: Modify JBoss EAP Service File
+  lineinfile:
+    state: present
+    path: "{{ jboss_eap_runtime_conf_src_file }}"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+    #- {regexp: "^# processname:", line: "# processname: jboss-{{ instance_name }}"}
+    #- {regexp: "^# pidfile:", line: "# pidfile: {{ jboss_eap_pid_file }}"}
+    - {regexp: "^JBOSS_HOME=", line: "JBOSS_HOME=\"{{ jboss_eap_home }}\""}
+    - {regexp: "^JBOSS_USER=", line: "JBOSS_USER={{ jboss_eap_user }}"}
+
+- name: Copy JBoss EAP Service Conf File
+  become: true
+  copy:
+    owner: "{{ jboss_eap_user }}"
+    group: "{{ jboss_eap_group }}"
+    src: "{{ jboss_eap_runtime_conf_src_file }}"
+    dest: "{{ jboss_eap_service_conf_dir }}"
+    remote_src: yes
+    mode: 0755
+
+- name: Copy JBoss EAP Service File
+  become: true
+  copy:
+    src: "{{ jboss_eap_initd_file }}"
+    dest: "{{ jboss_eap_etc_initd_dir }}"
+    #owner: "{{ jboss_eap_user }}"
+    #group: "{{ jboss_eap_group }}"
+    remote_src: yes
+    mode: 0755
+
+- name: Run restore
+  become: true
+  shell: "restorecon /etc/init.d/jboss-eap-rhel.sh"
+
+- name: Add chkconfig
+  become: true
+  shell: "chkconfig --add {{ jboss_eap_service_file }}"
+
+- name: Create default JBoss admin user
+  become: true
+  #become_user: "{{ jboss_eap_user }}"
+  command: "{{ jboss_eap_home }}/bin/add-user.sh -s -r ManagementRealm -u {{ jboss_eap_admin_user }} -p {{ jboss_eap_admin_password }}"
+
+- name: "Enable {{ jboss_eap_service_file }} Service"
+  become: true
+  service:
+    name: "{{ jboss_eap_service_file | splitext | first }}"
+    enabled: yes
+    state: started
+
+#- name: start Jboss EAP
+#  become: true
+#  service:
+#    name: jboss-eap-rhel
+#    state: started

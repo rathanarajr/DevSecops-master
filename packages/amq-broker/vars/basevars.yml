@@ -1,0 +1,5 @@
+extract_folder: "{{ pkg_file.split('/')[0] }}"
+App_folder: "{{ app_folders[0] }}"
+AMQ_job: "{{ app_configs.activeMQ_job }}"
+bootstrap_port: "{{ ports.bootstrap }}"
+broker_port: "{{ ports.broker }}"

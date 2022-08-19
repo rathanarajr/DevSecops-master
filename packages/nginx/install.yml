@@ -1,0 +1,15 @@
+- name: installing nginx
+  include_tasks: tasks/nginx.yml
+
+- name: run extra configuration
+  include_tasks: "confyml/nginx-conf.yml"
+  when: pkg.extra_conf == true
+
+- name: Enable nginx
+  command: systemctl enable nginx
+
+- name: Ensure nginx service is running as configured.
+  service:
+    name: nginx
+    state: started
+    enabled: true

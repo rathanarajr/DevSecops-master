@@ -1,0 +1,29 @@
+- name: "include base vars file"
+  include_vars: vars/basevars.yml
+
+# - name: "Check Jboss installation"
+#   include_tasks: tasks/tsk_check_jboss_installed.yml
+
+- name: Print Folder output
+  debug:
+    msg: 
+      - "extract_folder is {{ extract_folder}}"  
+      - "pkg_folder is {{ pkg_folder }}"
+ 
+- name: "Prepare jboss binaries"
+  include_tasks: tasks/tsk_prepare_jboss.yml
+#  when: jboss_running == "not installed"  
+
+- name: "Build and Run RH EAP Platform"
+  include_tasks: tasks/tsk_configure_jboss.yml
+#  when: jboss_running == "not installed"
+
+- name: run extra configuration
+  include_tasks: "confyml/jboss-eap-conf.yml"
+  when: pkg.extra_conf == true
+
+- name: start Jboss EAP
+  become: true
+  service:
+    name: jboss-eap-rhel
+    state: started

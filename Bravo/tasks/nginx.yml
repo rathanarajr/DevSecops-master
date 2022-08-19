@@ -1,0 +1,52 @@
+
+- name: Enable nginx:1.20 module
+  shell: yes | yum module enable nginx:1.20
+
+- name: Install nginx
+  shell: yes | yum install nginx
+
+    # Nginx setup.
+- name: Adding ports
+  lineinfile:
+          path: /etc/services
+          state: present
+          line: "{{ item }}"
+  with_items:
+          - cas-ui-nginx      49002/tcp     # CAS UI NGINX
+          - cas-nginx-cors    49003/tcp     # CAS CORS
+          - cas-nginx-xsh     49004/tcp     # CAS XSH-CAS
+
+- name: Copy nginx configuration in place.
+  copy:
+    src: '../vars/nginx.conf'
+    dest: '/etc/nginx/'
+    owner: root
+    group: root
+    #remote_src: yes
+    mode: 0644
+        #  shell: y | cp ./nginx.conf /etc/nginx/
+- name: Copy nginx proxy configuration in place.
+  copy:
+    src: '../vars/proxy.conf'
+    dest: '/etc/nginx/'
+    owner: root
+    group: root
+    #remote_src: yes
+    mode: 0644
+- name: Copy nginx proxy configuration in place.
+  copy:
+    src: '../vars/nginx-cors-map.conf'
+    dest: '/etc/nginx/conf.d'
+    owner: root
+    group: root
+    #remote_src: yes
+    mode: 0644
+
+- name: reload nginx
+  service: name=nginx state=reloaded
+
+- name: Ensure nginx service is running as configured.
+  service:
+    name: nginx
+    state: started
+    enabled: true

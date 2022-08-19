@@ -1,0 +1,33 @@
+
+- name: Check if JBoss EAP is installed
+  command: "{{ jboss_service_statuscmd }}"
+  register: jboss_result
+  ignore_errors: yes
+- debug:
+    msg: "{{ jboss_result }}"
+
+- name: Set the variable if JBoss is running
+  set_fact:
+    jboss_running: "started"
+  when: jboss_result is search("Started")
+
+- name: Set the variable if JBoss is stopped
+  set_fact:
+    jboss_running: "stopped"
+  when: jboss_result is search("Stopped")
+
+- name: Set the variable if JBoss is not installed
+  set_fact:
+    jboss_running: "not installed"
+  when: jboss_result is search("service could not be found")
+
+- debug:
+    msg: "{{ jboss_running }}"
+
+- name: Start Jboss EAP if not running
+  become: true
+  service:
+    name: jboss-eap-rhel
+    state: started
+  register: jboss_result
+  when: jboss_running == "stopped"

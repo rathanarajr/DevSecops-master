@@ -1,0 +1,8 @@
+install_dir: /data
+java_directory: "{{ install_dir }}/java-{{ pkg.version }}-openjdk"
+java_pack: "{{ pkg_file }}"
+java_version: "{{ pkg.version }}"
+alt_java_link: "{{ install_dir }}/java-{{ pkg.version }}-openjdk/bin/java"
+alt_java_link_c: "{{install_dir}}/java-{{ pkg.version }}-openjdk/bin/javac"
+
+

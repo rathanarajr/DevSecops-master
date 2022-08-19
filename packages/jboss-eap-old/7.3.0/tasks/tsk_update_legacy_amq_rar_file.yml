@@ -1,0 +1,73 @@
+- name: "create directory for legacy activemq"
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  with_items:
+    - "{{ rar_destination_path }}"
+    - "{{ rar_directory }}" 
+
+- name: "pull legacy file from jfrog"
+  get_url:
+    url: "{{ datasource_url }}"
+    url_username: "{{ art_username }}"
+    url_password: "{{ art_password }}"
+    dest: "{{ rar_destination_path }}"
+    mode: "0755"
+    force_basic_auth: yes
+
+- name: "unarchive legacy file"
+  become: true
+  unarchive:
+    src: "{{ legacy_source }}"
+    dest: "{{ rar_destination_path }}"
+    remote_src: yes
+
+- name: "delete legacyactivemq file"
+  file:
+    path: "{{ rar_destination_path }}/legacyactivemq.rar"
+    state: absent
+
+
+- name: Replace config-property-value from localhost to host ip address  
+  replace:
+    path: "{{ rar_destination_path }}/META-INF/ra.xml"
+    after: '<config-property-type>java.lang.String</config-property-type>'
+    regexp: '<config-property-value>tcp://localhost:61616</config-property-value>'
+    replace: '<config-property-value>tcp://10.145.2.215:61616</config-property-value>'
+
+- name: " archive legacy file"
+  become: true
+  archive:
+    path: "{{ rar_destination_path }}/*"
+    dest: "{{ rar_archive_path }}"
+    format: zip
+  register: check_file
+
+- name: "print debug"
+  debug:
+    var: check_file
+
+- name: remove rar file
+  file:
+    path: "{{ rar_path }}"
+    state: absent
+
+- name: "rename zip to rar"
+  copy:
+    src: "{{ rar_archive_path }}"
+    dest: "{{ rar_path }}"
+    remote_src: yes
+  when: check_file.failed == false
+
+- name: stop JBOSS
+  command: 'service jboss-eap-rhel stop'
+
+- name: "push the file"
+  copy:
+    src: "{{ rar_path }}"
+    dest: "{{ rar_destination }}"
+    mode: "0755"
+    group: jboss_as
+    owner: jboss-as
+    remote_src: yes

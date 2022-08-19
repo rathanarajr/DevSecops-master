@@ -1,0 +1,23 @@
+- name: start Jboss EAP
+  become: true
+  service:
+    name: jboss-eap-rhel
+    state: started
+
+- name: check server status
+  shell:
+    cmd: "{{ server_validation_cmd }}"
+  register: server_status
+
+- name: "print debug"
+  debug:
+    var: server_status.stdout_lines
+
+- name: "check the rar file status"
+  shell:
+    cmd: "{{ rar_validation_cmd }}"
+  register: command_opt
+
+- name: "print debug"
+  debug:
+    var: command_opt.stdout_lines

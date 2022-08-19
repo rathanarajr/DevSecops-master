@@ -1,0 +1,93 @@
+#Task to install Jboss EAP
+
+  - name: "Set Required Variables"
+    set_fact:
+      pkg_folder: "/tmp/{{ pkg.package }}-{{ pkg.version }}"
+      extract_folder: "{{ output.files[0].split('/')[0] }}"
+
+  - name: "Set Optional Variables"
+    include_vars: "../packages/{{ pkg.package }}/{{ pkg.version }}/extra-vars.yml"
+    ignore_errors: yes
+
+  - name: Move EAP files to EAP Home dir
+    command:
+      mv "{{ pkg_folder }}/{{ extract_folder }}" {{ Jboss_eap_HOME }}
+    
+  - name: Change permission of EAP Dir
+    file:
+      path: "{{ Jboss_eap_HOME }}"
+      mode: 0755
+  - name: Create JBoss EAP Group
+    group:
+      name: "{{ jboss_eap.group }}"
+      system: yes
+      state: present
+      gid: "400"
+  
+  - name: Create JBoss EAP User
+    user:
+       name: "{{ jboss_eap.user }}"
+       comment: "JBoss EAP User"
+       uid: "400"
+       group: "{{ jboss_eap.group }}"
+       password: "{{ jboss_eap.password | password_hash('sha512') }}"
+       home: "{{ Jboss_eap_HOME }}"
+       shell: "/bin/bash"
+  
+  - name: Change Owner of EAP Dir
+    file:
+      path: "{{ Jboss_eap_HOME }}"
+      owner: "{{ jboss_eap.user }}"
+      group: "{{ jboss_eap.group }}"
+      recurse: yes
+  
+  - name: Modify JBoss EAP Configuration File
+    lineinfile:
+      state: present
+      path: "{{ Jboss_eap_HOME }}/bin/init.d/jboss-eap.conf"
+      regexp: "{{ item.regexp }}"
+      line: "{{ item.line }}"
+    with_items:
+      #- {regexp: "^# JAVA_HOME=", line: "JAVA_HOME="/opt/java-openjdk-11.0.11"}(Optional)
+      - {regexp: "^# JBOSS_HOME=", line: 'JBOSS_HOME="{{ Jboss_eap_HOME }}"'}
+      - {regexp: "^# JBOSS_USER=", line: 'JBOSS_USER="{{ jboss_eap.user }}"'}
+  
+  - name: Update Profile with EAP Home variable
+    lineinfile:
+      path: /etc/profile
+      state: present
+      line: "{{ item }}"
+    with_items:
+      - 'export EAP_HOME="{{ Jboss_eap_HOME }}"'
+      - 'export PATH=$PATH:$EAP_HOME/bin'
+  
+  - name: Configuring EAP service files
+    command:
+      chdir: "{{ Jboss_eap_HOME }}"
+      cmd: "{{item }}"
+    with_items:
+      - cp {{ Jboss_eap_HOME }}/bin/init.d/jboss-eap.conf /etc/default/
+      - cp {{ Jboss_eap_HOME }}/bin/init.d/jboss-eap-rhel.sh /etc/init.d/
+
+  - name: Change perission for service files
+    file:
+      path: /etc/init.d/jboss-eap-rhel.sh
+      mode: o755
+  
+  - name: Configuring EAP as Service
+    command:
+      chdir: "{{ Jboss_eap_HOME }}"
+      cmd: "{{item }}"
+    with_items:
+      - restorecon /etc/init.d/jboss-eap-rhel.sh
+      - chkconfig --add jboss-eap-rhel.sh
+  
+  - name: Enable jboss-eap-rhel Service
+    service:
+      name: jboss-eap-rhel
+      state: started
+      enabled: yes
+  
+  - name: Create default JBoss admin user
+    become_user: "{{ jboss_eap.user }}"
+    command: "{{ Jboss_eap_HOME }}/bin/add-user.sh -s -r ManagementRealm -u {{ jboss_eap.admin_user }} -p {{ jboss_eap.admin_password }}"

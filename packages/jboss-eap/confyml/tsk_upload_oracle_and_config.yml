@@ -1,0 +1,56 @@
+- name: Insert xa-datasource jdbc driver class
+  blockinfile:
+    path: "{{ datasource_path }}"
+    marker: "<!-- Adding xa-datasource driver module class -->"
+    insertafter: "</driver>"
+    backup: no
+    block: |
+      <driver name="oracle" module="com.oracle.jdbc">
+          <xa-datasource-class>oracle.jdbc.xa.client.OracleXADataSource</xa-datasource-class>
+      </driver>
+
+- name: "print com folder"
+  debug:
+    msg: "com folder is {{ modules_path }}"
+    
+- name: "create com folder"
+  ansible.builtin.file:
+    path: "{{ modules_path }}/com"
+    state: directory
+    owner: "{{ jboss_eap_user }}"
+    group: "{{ jboss_eap_group }}"
+
+- name: "pull oracle from jfrog"
+  get_url:
+    url: "{{ oracle_url }}"
+    headers:
+        X-JFrog-Art-Api: "{{ artifactory_api_key }}"
+    dest: "{{ com_folder }}"
+    force_basic_auth: yes
+
+- name: "ensure oracle directory exist"
+  file:
+    path: "{{ com_folder }}"
+    state: directory
+    owner: "{{ jboss_eap_user }}"
+    group: "{{ jboss_eap_group }}"
+
+- name: "unarchive oracle file"
+  unarchive:
+    src: "{{ oracle_source }}"
+    dest: "{{ com_folder }}"
+    remote_src: yes
+    owner: "{{ jboss_eap_user }}"
+    group: "{{ jboss_eap_group }}"
+
+- name: "remove the archive file"
+  file:
+    path: "{{ oracle_source }}"
+    state: absent
+
+- name: "change permissions"
+  file: path={{ item }} mode=0775
+  with_items:
+    - "{{ module_xml_file }}"
+    - "{{ jar_path }}"
+

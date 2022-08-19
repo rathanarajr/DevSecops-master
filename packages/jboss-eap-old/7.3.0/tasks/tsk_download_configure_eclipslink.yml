@@ -1,0 +1,28 @@
+- name: "pull eclipse jar file from jfrog"
+  get_url:
+    url: "{{ eclipse_file_url }}"
+    url_username: "{{ art_username }}"
+    url_password: "{{ art_password }}"
+    dest: "{{ eclipse_file_destination }}"
+    mode: "0755"
+    force_basic_auth: yes
+
+- name: "change owner of eclipselink-jar file"
+  file:
+    path: "{{ eclipse_file_homedir }}"
+    owner: "{{ jboss_eap_user }}"
+    group: "{{ jboss_eap_group }}"
+    mode: "0755"
+
+- name: Insert XML surrounded by custom markers to add eclipse-link jar resource
+  blockinfile:
+    path: "{{ eclipse_path }}"
+    marker: "<!-- Add eclipse link jar file resource -->"
+    insertbefore: "</resources>"
+    backup: no
+    block: |
+      <resource-root path="eclipselink-2.7.8.jar">
+        <filter>
+            <exclude path="javax/**"/>
+        </filter>
+      </resource-root>

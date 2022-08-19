@@ -1,0 +1,19 @@
+# Dynatrace Installation
+
+- name: Install prerequisites
+  hosts: Bravo
+  tasks:
+  - name: Install wget & yum-utils
+    yum:
+        name:
+                - wget
+                - yum-utils
+                -  yum-plugin-versionlock
+        state: latest
+
+
+- name: Install Dynatrace
+  hosts: Bravo
+  tasks:
+        - name: Install Dynatrace
+          include: tasks/dynatrace.yml

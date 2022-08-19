@@ -1,0 +1,20 @@
+- name: Replace bind-address before the Standard-Endpoint-Config
+  replace:
+    path: "{{ datasource_path }}"
+    before: '<endpoint-config name="Standard-Endpoint-Config"/>'
+    regexp: '{jboss.bind.address:127.0.0.1}'
+    replace: "{jboss.bind.address:{{ bind_address }}}"
+
+- name: Replace bind-address-management 
+  replace:
+    path: "{{ datasource_path }}"
+    after: <interface name="management">
+    regexp: '{jboss.bind.address.management:127.0.0.1}'
+    replace: "{jboss.bind.address.management:{{ bind_address_management }}}"
+
+- name: Replace jboss bind-address-public
+  replace:
+    path: "{{ datasource_path }}"
+    after: <interface name="public">
+    regexp: '{jboss.bind.address:127.0.0.1}'
+    replace: "{jboss.bind.address:{{ bind_address_public }}}"

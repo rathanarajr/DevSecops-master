@@ -1,0 +1,52 @@
+##############################################
+### Ansible Pre and Post Validation Script ###
+###           Roy Lofthouse 2020           ###
+##############################################
+
+---
+- hosts: '{{ target }}'
+  gather_facts: no
+  vars:
+    type: "pre"
+
+  tasks:
+
+    ### set variables
+    - name: "Load variable file"
+      include_vars: "../configs/{{ target_env }}/appsets/{{ target_app }}/{{ target_config }}"
+
+    ### port checks ###
+    - name: "Check all port numbers are accessible from {{ target }}"
+      wait_for:
+        host: "{{ item.0.site }}"
+        port: "{{ item.1 }}"
+        state: started         # Port should be open
+        delay: 0               # No wait before first check (sec)
+        timeout: 3             # Stop checking after timeout (sec)
+      with_subelements:
+        - "{{ vars[type + '_port_checks'] }}"
+        - port
+      when: vars[type + '_port_checks'] is defined
+
+    ### MySQL Checks ###
+    - name: Check MySQL
+      debug:
+        msg: "Checking {{ item.0.server }} - {{ item.0.port }}"
+      with_subelements:
+        - "{{ vars[type + '_mysql_checks'] }}"
+        - database
+      when: vars[type + '_mysql_checks'] is defined
+
+    ### Service Checks ###
+    - name: Populate service facts
+      service_facts:
+      when: vars[type + '_service_checks'] is defined
+
+    - name: Check local Services
+      assert:
+        that:
+          - ansible_facts.services["{{ item }}"].state == "running"
+        quiet: yes
+      with_items:
+        - "{{ vars[type + '_service_checks'] }}"
+      when: vars[type + '_service_checks'] is defined

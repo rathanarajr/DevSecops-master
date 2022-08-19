@@ -1,0 +1,23 @@
+# Maven Installation
+
+- name: Install prerequisites
+  hosts: Bravo
+  tasks:
+  - name: Install wget & yum-utils
+    yum:
+        name:
+                - wget
+                - yum-utils
+                -  yum-plugin-versionlock
+        state: latest
+
+
+- name: Install Apache Maven 4
+  hosts: Bravo
+  vars:
+          maven_version: "3.8.4"
+  vars_files:
+        - vars/base.yml
+  tasks:
+        - name: Install Apache Maven 3
+          include: tasks/maven.yml

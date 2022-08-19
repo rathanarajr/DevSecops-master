@@ -1,0 +1,21 @@
+# Fuse Installation
+
+- name: Install prerequisites
+  hosts: xsb
+  tasks:
+  - name: Install wget & yum-utils
+    yum:
+        name:
+                - wget
+                - yum-utils
+                -  yum-plugin-versionlock
+        state: latest
+        
+- name: Install JBoss Fuse Karaf
+  hosts: xsb
+  vars_files:
+        - vars/base.yml
+  tasks:
+        - name: Install RedHat JBoss Fuse 7.10 Apache Karaf (x6)
+          include: tasks/fuse.yml
+

@@ -1,0 +1,56 @@
+####################################
+### Ansible VM Validation Script ###
+###      Roy Lofthouse 2020      ###
+####################################
+
+---
+- hosts: '{{ target }}'
+  tasks:
+    ### set variables
+    - name: "Load variable file"
+      include_vars: "../configs/{{ target_env }}/appsets/{{ target_app }}/{{ target_config }}"
+
+    - name: "Validating Host Configuration"
+      assert:
+        that:
+          - ansible_hostname == '{{ host_name }}'
+          #- ansible_default_ipv4.address == '{{ ip4_address }}'
+          #- ansible_default_ipv4.netmask == '{{ subnet_mask }}'
+
+    - name: "Check for default specification"
+      include_vars: "../configs/{{ target_env}}/sizing/{{ sizing }}.cfg"
+      when: vm_sizing is not defined
+
+    - name: "Validating Memory and CPU"
+      assert:
+        that:
+          - ansible_memtotal_mb >= {{ vm_sizing.mem_total }}
+          - ansible_processor_count >= {{ vm_sizing.cpu_count }}
+          - ansible_processor_cores >= {{ vm_sizing.cpu_cores }}
+
+    - name: "Validating Number of Disks"
+      assert:
+        that:
+          #- (ansible_devices.keys())|reject('match', '^loop(.*)$')|reject('match', '^ram(.*)$') | length == {{ vm_sizing.disks|length }}
+          - (ansible_devices.keys())| map('regex_search', 'sd.*') | select('string') | list | length == {{ vm_sizing.disks|length }}
+
+    - name: "Validating Disk Sizing"
+      assert:
+        that:
+          - ansible_devices[item.name].size == '{{ item.size }}'
+        quiet: yes
+      with_items:
+        - "{{ vm_sizing.disks }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when: vm_sizing.disks is defined
+
+    - name: "Validating Operating System"
+      assert:
+        that:
+          - ansible_os_family == '{{ os }}'
+          - ansible_distribution == '{{ distro }}'
+          - ansible_distribution_major_version == '{{ distro_major_version }}'
+          - ansible_distribution_version == '{{ distro_version }}'
+
+          - ansible_domain == '{{ domain }}'

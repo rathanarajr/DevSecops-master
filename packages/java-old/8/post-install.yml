@@ -1,0 +1,10 @@
+
+  - name: "Set Variables"
+    set_fact:
+      java8_pkg: "java-1.8.0-openjdk-portable-1.8.0.312.b07-1.portable.jdk.el.x86_64.tar.xz"
+      java8_folder: "java-8-openjdk"
+      pkg_folder: "/tmp/{{ pkg.package }}-{{ pkg.version }}"
+
+  - name: "ensure Java directory exists"
+    debug:
+      msg: "Testing post install script for {{ java8_pkg }}"

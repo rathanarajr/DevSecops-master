@@ -1,0 +1,114 @@
+#####################################
+### Ansible Package Update Script ###
+###     Roy Lofthouse 2020        ###
+#####################################
+
+  ### Remove the package lock file
+  - name: "Unlock {{ pkg.package }}"
+    lineinfile:
+      path: /etc/yum.conf
+      line: "exclude={{ pkg.package }}"
+      state: absent
+    when: 
+      - pkg.source == "package"
+
+  ### Install a specific version of the package via package manager
+  - name: "{{ pkg.type }} {{ pkg.package }} ({{ pkg.version }}) via package manager"
+    become: yes
+    package:
+      name: "{{ pkg.package }}-{{ pkg.version }}"
+      state: present
+    when:
+      - pkg.source == "package"
+      - pkg.version != "latest"
+      - pkg.type == "install"
+
+  ### Install the latest package via package manager
+  - name: "{{ pkg.type }} {{ pkg.package }} (latest version)"
+    become: yes
+    package:
+      name: "{{ pkg.package }}"
+      state: present
+    when:
+      - pkg.source == "package"
+      - pkg.version == "latest"
+      - pkg.type == "install"
+
+  ### Remove the package via package manager
+  - name: "{{ pkg.type }} {{ pkg.package }}"
+    package:
+      name: "{{ pkg.package }}"
+      state: absent
+    when:
+      - pkg.source == "package"
+      - pkg.type == "remove"
+
+  ### Apply the package lock file
+  - name: "Lock {{ pkg.package }} at ({{ pkg.version }})"
+    lineinfile:
+      path: /etc/yum.conf
+      line: "exclude={{ pkg.package }}"
+    when: 
+      - pkg.source == "package"
+      - pkg.type == "install"
+      - pkg.lock is defined
+      - pkg.lock|bool == True
+
+  ### Download and extract the package from the repo
+  - name: "Create temporary package folder for {{ pkg.package }}"
+    file:
+      path: /tmp/{{ pkg.package }}-{{ pkg.version }}
+      state: directory
+    when: pkg.source == "repo"
+
+  - name: "Downloading {{ pkg.package }}"
+    get_url:
+      url: "{{ artifactory_url }}/{{ pkg.package }}/{{ pkg.version }}/{{ pkg.package }}.zip"
+      headers:
+        X-JFrog-Art-Api: "{{ artifactory_api_key }}"
+      dest: /tmp/{{ pkg.package }}-{{ pkg.version }}/{{ pkg.package }}.zip
+      mode: 0755
+    when: pkg.source == "repo"
+
+  - name: "Install unzip if required"
+    become: yes
+    package:
+      name: unzip
+      state: present
+    when: pkg.source == "repo"
+
+  - name: "Unzip {{ pkg.package }}"
+    become: yes
+    unarchive:
+      src: /tmp/{{ pkg.package }}-{{ pkg.version }}/{{ pkg.package }}.zip
+      dest: /tmp/{{ pkg.package }}-{{ pkg.version }}/
+      remote_src: yes
+      list_files: true
+    when: pkg.source == "repo"
+    register: pkg_output
+
+  ###Set Package Variables
+  - name: "Set Package variables"
+    set_fact:
+      pkg_folder: "{{ pkg_output.dest }}"
+      pkg_file: "{{ pkg_output.files[0] }}"
+    when: pkg.source == "repo"
+
+  ### Remove zip file
+  - name: "Remove zip file for {{ pkg.package }} ({{ pkg.version }})"
+    file:
+      path: /tmp/{{ pkg.package }}-{{ pkg.version }}/{{ pkg.package }}.zip
+      state: absent
+    when: pkg.source == "repo"
+
+  ### Run the install/remove/update script
+  - name: "{{ pkg.type }} {{ pkg.package }} ({{ pkg.version }}) via ansible"
+    include_tasks: "../packages/{{ pkg.package }}/{{ pkg.version }}/{{ pkg.type }}.yml"
+    when: pkg.source != "package"
+
+  ### Remove source files
+  - name: "Remove source files for {{ pkg.package }} ({{ pkg.version }})"
+    file:
+      path: /tmp/{{ pkg.package }}-{{ pkg.version }}
+      state: absent
+    when: pkg.source == "repo"

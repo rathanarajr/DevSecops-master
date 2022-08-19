@@ -1,0 +1,5 @@
+- name: "include base vars file"
+  include_vars: vars/basevars.yml
+
+- name: "installing Apache Maven"
+  include_tasks: tasks/apache-maven.yml

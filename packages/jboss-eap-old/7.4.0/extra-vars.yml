@@ -1,0 +1,8 @@
+jboss_eap:
+  user: "jboss_as"
+  group: "jboss_as"
+  password: "jboss_as"
+  version: "7.4.0"
+  admin_user: "admin"
+  admin_password: "admin"
+Jboss_eap_HOME: "/opt/jboss_eap-{{ jboss_eap.version }}"

@@ -1,0 +1,60 @@
+- name: Check the resource adapter presence in standalone
+  shell:
+    chdir: "{{ destination_path }}"
+    cmd: grep '<!--<subsystem xmlns="urn:jboss:domain:resource-adapters:5.0"/>-->' "{{ jboss_eap_default_config }}"
+  ignore_errors: yes
+  register: presence
+  
+- debug:
+    var: presence
+
+- name: Commant the section jboss-domain-resource-adapters in standalone
+  replace:
+    path: "{{ datasource_path }}"
+    after: '<subsystem xmlns="urn:jboss:domain:request-controller:1.0"/>'
+    regexp: '<subsystem xmlns="urn:jboss:domain:resource-adapters:5.0"/>'
+    replace: '<!--<subsystem xmlns="urn:jboss:domain:resource-adapters:5.0"/>-->'
+  when: presence.stdout == ""
+
+- name: Insert the section jboss-domain-resource-adapters in standalone
+  blockinfile:
+    path: "{{ datasource_path }}"
+    marker: "<!-- Configure jboss amq domain request adapters -->"
+    insertafter: <subsystem xmlns="urn:jboss:domain:request-controller:1.0"/>
+    block: |
+      <subsystem xmlns="urn:jboss:domain:resource-adapters:5.0">
+            <resource-adapters>
+                <resource-adapter id="legacyactivemq.rar">
+                    <archive>
+                        legacyactivemq.rar
+                    </archive>
+                    <transaction-support>XATransaction</transaction-support>
+                    <config-property name="ServerUrl">{{ server_url }}</config-property>
+                    <connection-definitions>
+                        <connection-definition class-name="org.apache.activemq.ra.ActiveMQManagedConnectionFactory" jndi-name="java:/jms/ActiveMQQueueConnectionFactory" enabled="true" use-java-context="true" pool-name="ActiveMQConnectionFactoryPool" use-ccm="true">
+                            <xa-pool>
+                                <min-pool-size>1</min-pool-size>
+                                <max-pool-size>20</max-pool-size>
+                            </xa-pool>
+                        </connection-definition>
+                    </connection-definitions>
+                    <admin-objects>
+                        <admin-object class-name="org.apache.activemq.command.ActiveMQQueue" jndi-name="java:/jms/WFL_DIRECTDBLOAD_MIXEDMARKETRES_IN" enabled="true" use-java-context="true" pool-name="ActiveMQQueue.WFL_DIRECTDBLOAD_MIXEDMARKETRES_IN">
+                            <config-property name="PhysicalName">WFL_DIRECTDBLOAD_MIXEDMARKETRES_IN</config-property>
+                        </admin-object>
+                        <admin-object class-name="org.apache.activemq.command.ActiveMQQueue" jndi-name="java:/jms/XEAL_LOGMESSAGE_REQ_IN" enabled="true" use-java-context="true" pool-name="ActiveMQQueue.XEAL_LOGMESSAGE_REQ_IN">
+                            <config-property name="PhysicalName">XEAL_LOGMESSAGE_REQ_IN</config-property>
+                        </admin-object>
+                        <admin-object class-name="org.apache.activemq.command.ActiveMQQueue" jndi-name="java:/jms/WFL_DIRECTDBLOAD_LIDSRES_IN" enabled="true" use-java-context="true" pool-name="ActiveMQQueue.WFL_DIRECTDBLOAD_LIDSRES_IN">
+                            <config-property name="PhysicalName">WFL_DIRECTDBLOAD_LIDSRES_IN</config-property>
+                        </admin-object>
+                        <admin-object class-name="org.apache.activemq.command.ActiveMQQueue" jndi-name="java:/jms/SSO_USERPROVISIONING_USERPROFILE_IN" enabled="true" use-java-context="true" pool-name="ActiveMQQueue.SSO_USERPROVISIONING_USERPROFILE_IN">
+                            <config-property name="PhysicalName">SSO_USERPROVISIONING_USERPROFILE_IN</config-property>
+                        </admin-object>
+                        <admin-object class-name="org.apache.activemq.command.ActiveMQQueue" jndi-name="java:/jms/WFL_DIRECTDBLOAD_POSHRES_IN" enabled="true" use-java-context="true" pool-name="ActiveMQQueue.WFL_DIRECTDBLOAD_POSHRES_IN">
+                            <config-property name="PhysicalName">WFL_DIRECTDBLOAD_POSHRES_IN</config-property>
+                        </admin-object>
+                    </admin-objects>
+                </resource-adapter>
+            </resource-adapters>
+        </subsystem>

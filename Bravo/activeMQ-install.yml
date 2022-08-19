@@ -1,0 +1,29 @@
+- name: Install prerequisites
+  hosts: ActiveMQG
+  tasks:
+  - name: Install wget & yum-utils
+    yum:
+        name:
+                - wget
+                - yum-utils
+                - yum-plugin-versionlock
+                - unzip
+        state: latest
+
+- name: Install Java for Active MQ
+  hosts: ActiveMQG
+  vars_files:
+        - vars/base.yml
+  vars:
+         java_version: "8"
+  tasks:
+        - name: Install Java 8
+          include: tasks/java.yml
+
+- name: Install JBoss Active MQ for XSB
+  hosts: ActiveMQG
+  vars_files:
+        - vars/base.yml
+  tasks:
+        - name: Install JBoss Active MQ
+          include: tasks/activeMQ.yml

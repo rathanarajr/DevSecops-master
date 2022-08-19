@@ -1,0 +1,20 @@
+- name: "service jboss restart"
+  service:
+    name: "{{ service }}"
+    state: restarted
+
+- name: "execute jboss-cli datasource validation"
+  shell:
+    cmd: "{{ validation_cmd }}"
+  register: command_opt
+
+- name: "set jboss-cli datasource validation output"
+  set_fact:
+    datasource_validation_output: "{{ command_opt.stdout }}"
+
+-  debug:
+     var: datasource_validation_output
+
+- debug:
+         var: command_opt.stdout_lines
+  when: command_opt is succeeded

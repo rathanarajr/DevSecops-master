@@ -1,0 +1,46 @@
+- name: Set variables to oracle datasource
+  set_fact:
+    datasource_jndiname: "{{ vars[ target_env + '_' + target_app + '_datasource_jndiname'] }}"
+    datasource_name: "{{ vars[ target_env + '_' + target_app + '_datasource_name'] }}"
+    datasource_portnumber: "{{ vars[ target_env + '_' + target_app + '_datasource_portnumber'] }}"
+    datasource_servername: "{{ vars[ target_env + '_' + target_app + '_datasource_servername'] }}"
+    datasource_urlname: "{{ vars[ target_env + '_' + target_app + '_datasource_urlname'] }}"
+    datasource_minsize: "{{ vars[ target_env + '_' + target_app + '_datasource_minsize'] }}"
+    datasource_initsize: "{{ vars[ target_env + '_' + target_app + '_datasource_initsize'] }}"
+    datasource_maxsize: "{{ vars[ target_env + '_' + target_app + '_datasource_maxsize'] }}"
+    datasource_sec_uname: "{{ vars[ target_env + '_' + target_app + '_datasource_sec_uname'] }}"
+    datasource_sec_passwd: "{{ vars[ target_env + '_' + target_app + '_datasource_sec_passwd'] }}"
+
+- name: Insert XML surrounded by custom markers under xa-datasource
+  blockinfile:
+    path: "{{ datasource_path }}"
+    marker: "<!-- Add xa-datasource for app {{ target_app }} -->"
+    insertafter: "</datasource>"
+    block: |
+      <xa-datasource jndi-name="{{ datasource_jndiname }}" pool-name="{{ datasource_name }}" enabled="true">
+            <xa-datasource-property name="PortNumber">
+                                    {{ datasource_portnumber }}
+                                </xa-datasource-property>
+            <xa-datasource-property name="ServerName">
+                                    {{ datasource_servername }}
+                              </xa-datasource-property>
+            <xa-datasource-property name="URL">
+                                    {{ datasource_urlname }}
+                                </xa-datasource-property>
+            <xa-datasource-class>oracle.jdbc.xa.client.OracleXADataSource</xa-datasource-class>
+            <driver>oracle</driver>
+            <xa-pool>
+                <min-pool-size>{{ datasource_minsize }}</min-pool-size>
+                <initial-pool-size>{{ datasource_initsize }}</initial-pool-size>
+                <max-pool-size>{{ datasource_maxsize }}</max-pool-size>
+            </xa-pool>
+            <security>
+                <user-name>{{ datasource_sec_uname }}</user-name>
+                <password>{{ datasource_sec_passwd }}</password>
+            </security>
+            <validation>
+                <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker"/>
+                <background-validation>true</background-validation>
+                <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter"/>
+            </validation>
+      </xa-datasource>

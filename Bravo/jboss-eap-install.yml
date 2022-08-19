@@ -1,0 +1,21 @@
+# JBoss EAP Installation
+
+- name: Install prerequisites
+  hosts: Bravo
+  tasks:
+  - name: Install wget & yum-utils
+    yum:
+        name:
+                - wget
+                - yum-utils
+                -  yum-plugin-versionlock
+        state: latest
+
+
+- name: Install JBoss EAP
+  hosts: Bravo
+  vars_files:
+        - vars/base.yml
+  tasks:
+        - name: Install JBoss EAP
+          include: tasks/jboss-eap.yml

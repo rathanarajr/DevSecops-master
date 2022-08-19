@@ -1,0 +1,25 @@
+- name: Downloading script
+  command: curl -u "svc-lmcp-devsecops:XTRdtdf$%&%*&^4312434657GYVUYrdyttY" -X GET "https://artifactory.dxc.com:443/artifactory/lmcp-devsecops/temp/scripts/nvm-install.sh" --output install.sh
+
+- name: Installing nvm using script
+  command: "{{ item }}"
+  with_items:
+    - chmod +x install.sh
+    - sh install.sh
+
+- name: Install NodeJS 14.17.6
+  shell: >
+    source ~/.nvm/nvm.sh && nvm install 14.17.6
+
+- name: Install Angular.js
+  npm:
+    name: "@angular/cli@13.2.3"
+    global: yes
+    state: present
+
+- name: Removing the NVM installation script
+  command: rm -rf install.sh
+
+############ This section is to install npm packages from package.json file ###########
+#      - name: Install npm packages
+#        command: npm install

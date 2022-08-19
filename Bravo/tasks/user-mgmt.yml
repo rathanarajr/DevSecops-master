@@ -1,0 +1,24 @@
+- name: Download Servers Passwords spreadsheet
+  get_url:
+          url: "{{ art_url }}/temp/Bravo-Passwords.xlsx"
+          url_username: "{{ art_id }}"
+          url_password: "{{ art_password }}"
+          dest: /tmp
+          mode: 0755
+          force_basic_auth: yes
+          timeout: 300
+  register: Password_file
+
+- name: Convert spreadsheet to yaml file
+  shell: "./scripts/convert_passwords_file_python_3_7.py -i {{ Password_file.dest }} -o vars/Password_file.yml"
+
+- name: Include the generated password yaml file
+  include_vars: vars/Password_file.yml
+
+- name: Accept ssh connection
+  shell: "ssh-keyscan -H {{ item.ip }} >> ~/.ssh/known_hosts "
+  with_items: "{{ servers_passwords }}"
+
+- name: Copy ssh key to servers
+  shell: 'sshpass -p "{{ item.password }}" ssh-copy-id cloudos@{{ item.ip }}'
+  with_items: "{{ servers_passwords }}"

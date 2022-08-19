@@ -1,0 +1,69 @@
+#Task to install Apache Maven
+
+- name: Get Java ZIP Package Name
+  set_fact:
+          Maven_zip_package: "{{ item.value.zip_pkg }}"
+          Maven_zip_folder: "{{ item.value.zip_folder }}"
+          Maven_Version: "{{ item.key }}"
+  when: maven_version == "{{ item.key }}"
+  loop: "{{ lookup('dict', apache_maven.version) }}"
+
+- name: Download Apache Maven 3
+  get_url:
+          url: "{{ art_url }}/packages/apache-maven/{{ Maven_Version }}/{{ Maven_zip_package }}"
+          url_username: "{{ art_id }}"
+          url_password: "{{ art_password }}"
+          dest: /tmp
+          mode: 0644
+          force_basic_auth: yes
+
+- name: ensure Maven directory exists
+  file:
+          path: /opt/{{ Maven_zip_folder }}
+          state: directory
+          mode: 0755
+
+- name: Unarcive Maven file
+  unarchive:
+          src: /tmp/{{ Maven_zip_package }}
+          dest: /opt/{{ Maven_zip_folder }}
+          extra_opts: [--strip-components=1]
+          remote_src: yes
+
+- name: Correct bin folder permission
+  file:
+          path: /opt/{{ Maven_zip_folder }}/bin
+          state: directory
+          mode: 0755
+
+- name: copy maven settings file to servers
+  copy:
+          src: vars/settings.xml
+          dest: /opt/maven/conf/settings.xml
+          mode: '0644'
+
+- name: Create a symbolic link for mvn
+  file:
+          src: /opt/{{ Maven_zip_folder }}/bin/mvn
+          dest: /usr/bin/mvn
+          state: link
+
+- name: Update Profile with Maven Home variable
+  lineinfile:
+          path: /etc/profile
+          state: present
+          line: "{{ item }}"
+  with_items:
+          - 'export M2_HOME="/opt/{{ Maven_zip_folder }}"'
+          - 'export PATH=$PATH:$M2_HOME/bin'
+
+- name: Source Profile File
+  shell:
+          cmd: source /etc/profile
+
+- name: Delete Maven Package File
+  file:
+          path: /tmp/{{ Maven_zip_package }}
+          state: absent
+
+

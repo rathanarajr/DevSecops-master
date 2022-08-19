@@ -1,0 +1,4 @@
+# Dynatrace Installation
+
+- name: Install Dynatrace
+  include_tasks: tasks/dynatrace.yml

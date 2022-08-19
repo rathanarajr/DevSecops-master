@@ -1,0 +1,101 @@
+jboss_eap_artifact_source: https://artifactory.dxc.com:443/artifactory/lmcp-devsecops/temp/
+jboss_eap_patch_artifact_source: https://access.redhat.com/jbossnetwork/restricted/softwareDownload.html?softwareId=57891
+jboss_eap_artifacts_dl_dest_dir: /opt
+jboss_eap_group: jboss_as
+jboss_eap_user: jboss-as
+#jboss_eap_name_version: jboss-eap-7.3
+jboss_eap_base_version: 7.3
+jboss_eap_home_dir_name: jboss-eap-{{jboss_eap_base_version}}
+jboss_eap_library_dest_dir: "/opt/{{ jboss_eap_home_dir_name }}"
+jboss_eap_base_directory_name: jboss-eap-7.3.0
+jboss_eap_artifact_name: "{{ jboss_eap_base_directory_name }}.zip"
+jboss_eap_bin_dir_path: "/opt/{{ jboss_eap_artifact_name }}"
+#jboss_eap_patch_artifact_name: jboss-eap-7.1.2-patch.zip
+#jboss_eap_standalone_backup_dir_name: .standalone
+#jboss_eap_home": "/opt/jboss-eap-7.3"
+
+art_username: "svc-lmcp-devsecops"
+art_password: "XTRdtdf$%&%*&^4312434657GYVUYrdyttY"
+
+jboss_eap_admin_user: "jbosseap"
+jboss_eap_admin_password: "Password1"
+
+#az_rhel_adminuser: "azureuser"
+#az_rhel_vm_key: "/opt/private_key/UKIMDLMALEAP101_key.pem"
+
+az_rhel_adminuser: "cloudos"
+#z_rhel_vm_key: "/opt/private_key/UKIPULMALAPPE101_PUB.pem"
+az_rhel_admin_pass: "xhG>(`V;5`!L~4GUs*q00hT~ogn2SIsY"
+
+#jboss_eap_default_logging_timezone: America/New_York
+jboss_eap_default_config: standalone.xml
+jboss_eap_default_mode: standalone
+jboss_eap_bind_default_web_address: 0.0.0.0
+jboss_eap_bind_default_management_address: 0.0.0.0
+jboss_eap_default_http_port: 8080
+jboss_eap_default_management_port: 9990
+
+# TODO: Reenable patch
+jboss_eap_apply_patch: true
+
+jboss_eap_service_conf_dir: "/etc/default"
+jboss_eap_etc_initd_dir: "/etc/init.d"
+jboss_eap_service_log_dir: "/var/log"
+jboss_eap_service_data_dir: "/var/run"
+
+#jboss_instances:
+#  - name: jboss-eap
+
+
+# ussually this is set at the playbook level
+#transfer_method: # csp-to-host | copy-from-contoller | url
+
+# this used for openjdk installation
+art_url: https://artifactory.dxc.com/artifactory/lmcp-devsecops/packages/java/11/java-11-openjdk-11.0.13.0.8-1.portable.jdk.el.x86_64.tar.xz
+java_directory: /opt/java-11-openjdk
+java_src: /opt/java-11-openjdk-11.0.13.0.8-1.portable.jdk.el.x86_64.tar.xz
+alt_java_link: /opt/java-11-openjdk/bin/java
+alt_java_link_c: /opt/java-11-openjdk/bin/javac
+
+#pull the standalone.xml file from jfrog
+datasource_url: https://artifactory.dxc.com/artifactory/lmcp-devsecops/temp/standalone.xml
+destination_path: /data/jboss-eap-7.3/standalone/configuration
+
+# this is used for adding datasource file
+datasource_path: "/data/jboss-eap-7.3/standalone/configuration/standalone.xml"
+datasource_name: "POOLNAME"
+datasource_jndiname: "JNDINAME"
+datasource_portnumber: "PORTNUMBER"
+datasource_servername: "SERVERNAME"
+datasource_urlname: "DATASOURCE-URL-NAME"
+datasource_minsize: "MIN-POOL-SIZE"
+datasource_initsize: "INIT-POOL-SIZE"
+datasource_maxsize: "MAX-POOL-SIZE"
+datasource_suname: "SEC-USER-NAME"
+datasource_spasswd: "SEC-PASSWORD"
+datasource_name_value: "xsheaccount"
+datasource_jndiname_value: "java:/XshEaccount"
+datasource_portnumber_value: "1521"
+datasource_servername_value: "10.145.99.49"
+datasource_urlname_value: "jdbc:oracle:thin:@WFLTSBDAT.xchanginghosting.com:1521:wfltsb"
+datasource_minsize_value: "28"
+datasource_initsize_value: "28"
+datasource_maxsize_value: "52"
+datasource_suname_value: "XSH_EACCOUNT_GFISH"
+datasource_spasswd_value: "h66wr11j"
+
+# this is used for push oracle jar into jboss_home folder
+com_path: /data/jboss-eap-7.3/modules
+oracle_url: https://artifactory.dxc.com/artifactory/lmcp-devsecops/temp/oracle.zip
+dest_folder: /data/jboss-eap-7.3/modules/com
+src_url: /data/jboss-eap-7.3/modules/com/oracle.zip
+module_path: /data/jboss-eap-7.3/modules/com/oracle/jdbc/main/module.xml
+jar_path: /data/jboss-eap-7.3/modules/com/oracle/jdbc/main/ojdbc8-21.1.0.0.jar
+
+# used for restart the jboss service
+service: jboss-eap-rhel
+# used for datasource validation purpose
+validation_cmd: "{{ jboss_eap_library_dest_dir }}/bin/jboss-cli.sh --controller=localhost:9990 --connect --user={{ jboss_eap_admin_user }} --password={{ jboss_eap_admin_password }} -c /subsystem=datasources/xa-data-source={{ datasource_name_value }}:test-connection-in-pool"
+
+
+

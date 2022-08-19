@@ -1,0 +1,60 @@
+# Script to Creat Application user and Folder
+  - name: "include secret.yml"
+    include_vars: vars/secret.yml
+
+  - name: Set variables to username and password
+    set_fact:
+      app_username: "{{ vars[ target_env + '_' + target_app + '_username'] }}"
+      app_password: "{{ vars[ target_env + '_' + target_app + '_userpass'] }}"
+
+  - name: Create App Group "{{ app_username }}"
+    group:
+          name: "{{ app_username }}"
+          state: present
+
+  - name: Create App user "{{ app_username }}"
+    user:
+          name: "{{ app_username }}"
+          password: "{{ app_password |  password_hash('sha512') }}"
+          shell: /bin/bash
+          state: present
+          group: "{{ app_username }}"
+          # groups: wheel
+
+  - name: Disable password expiry for App user
+    command:
+          /usr/bin/passwd -x -1 "{{ app_username }}"
+
+  - name: adding '{{ app_username }}' to group sudo if reguired
+    user:
+          name: "{{ app_username }}"
+          groups: wheel
+          append: yes          
+    when: app_configs.app_username_sudo == "true"          
+
+  - name: Create App folder
+    file:
+          path: "{{ item }}"
+          owner: "{{ app_username }}"
+          group: "{{ app_username }}"
+          recurse: yes
+    with_items:
+        - "{{ app_folders }}"
+    when: app_folders is defined
+
+  # - name: Add Proxy settings
+  #   lineinfile:
+  #         path: /etc/profile
+  #         state: present
+  #         line: "{{ item }}"
+  #   with_items:
+  #         - 'PROXY_URL="http://10.16.32.17:8080/"'
+  #         - 'export http_proxy="$PROXY_URL"'
+  #         - 'export https_proxy="$PROXY_URL"'
+  #         - 'export ftp_proxy="$PROXY_URL"'
+  #         - 'export no_proxy="127.0.0.1,localhost"'
+  #         - 'export HTTP_PROXY="$PROXY_URL"'
+  #         - 'export HTTPS_PROXY="$PROXY_URL"'
+  #         - 'export FTP_PROXY="$PROXY_URL"'
+  #         - 'export NO_PROXY="127.0.0.1,localhost"'
+

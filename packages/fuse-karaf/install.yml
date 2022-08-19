@@ -1,0 +1,5 @@
+- name: "include base vars file"
+  include_vars: vars/basevars.yml
+
+- name: "installing Fuse Karaf"
+  include_tasks: tasks/fuse.yml

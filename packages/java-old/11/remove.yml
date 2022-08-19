@@ -1,0 +1,32 @@
+- name: "include base vars file"
+  include_vars: vars/basevars.yml
+
+- name: Removing the JAVA_HOME entry in the /etc/profile
+  lineinfile:
+    path: /etc/profile
+    state: absent
+    line: "{{ item }}"
+  with_items:
+    - 'export JAVA_HOME="{{ java_directory }}"'
+    - 'export PATH=$PATH:$JAVA_HOME/bin'
+    
+- name: Alternatives Java link deletion
+  file:
+    path: "{{ alt_java_link }}"
+    state: absent
+
+- name: Alternatives Javac link deletion
+  file:
+    path: "{{ alt_java_link_c }}"
+    state: absent
+
+- name: remove openjdk
+  command: rm -rf java-openjdk-11.0.9
+  args:
+    chdir: "{{ openjdk_artifacts_dl_dest_dir }}"
+
+
+- name: remove openjdk tar file
+  command: rm -rf java-11-openjdk-11.0.13.0.8-1.portable.jdk.el.x86_64.tar.xz  
+  args:
+    chdir: "{{ openjdk_artifacts_dl_dest_dir }}"

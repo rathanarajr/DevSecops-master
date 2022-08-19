@@ -1,0 +1,4 @@
+# Dynatrace Installation
+
+- name: Add App user
+  include_tasks: tasks/app-user.yml

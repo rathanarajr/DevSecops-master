@@ -1,0 +1,10 @@
+- name: Set SSH connections to new MSVx servers
+  hosts: localhost
+  vars_files:
+        - vars/base.yml
+  tasks:
+       - name: Ensure oython openpyxl is downloaded
+         command: "pip3 install  --user openpyxl"
+
+       - name: Set SSH connections to new MSVx servers
+         include: tasks/user-mgmt.yml

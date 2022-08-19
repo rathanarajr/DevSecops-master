@@ -1,0 +1,21 @@
+- name: Additional task to include oracle module 
+  become: true
+  command: "{{ item }}"
+  with_items:
+    - mkdir -p {{ Jboss_eap_HOME }}/modules/system/layers/base/com/oracle/jdbc/storage/main
+    - curl -u "svc-lmcp-devsecops:XTRdtdf$%&%*&^4312434657GYVUYrdyttY" -X GET "https://artifactory.dxc.com:443/artifactory/lmcp-devsecops/temp/jboss-eap-insurance-portal/ojdbc6-11.2.0.2.0.jar" --output ojdbc6-11.2.0.2.0.jar
+    - curl -u "svc-lmcp-devsecops:XTRdtdf$%&%*&^4312434657GYVUYrdyttY" -X GET "https://artifactory.dxc.com:443/artifactory/lmcp-devsecops/temp/jboss-eap-insurance-portal/module.xml" --output module.xml
+    - curl -u "svc-lmcp-devsecops:XTRdtdf$%&%*&^4312434657GYVUYrdyttY" -X GET "https://artifactory.dxc.com:443/artifactory/lmcp-devsecops/temp/jboss-eap-insurance-portal/standalone.xml" --output standalone.xml
+    - cp ojdbc6-11.2.0.2.0.jar module.xml {{ Jboss_eap_HOME }}/modules/system/layers/base/com/oracle/jdbc/storage/main
+    - chown -R jboss_as:jboss_as {{ Jboss_eap_HOME }}/modules/system/layers/base/com/oracle
+    - cp standalone.xml {{ Jboss_eap_HOME }}/standalone/configuration
+    - chown jboss_as:jboss_as {{ Jboss_eap_HOME }}/standalone/configuration/standalone.xml
+
+- name: Restart JBoss EAP
+  service:
+    name: jboss-eap-rhel
+    state: restarted
+
+- name: Delete the additional XML file
+  become: true
+  command: rm -rf module.xml standalone.xml ojdbc6-11.2.0.2.0.jar

@@ -1,0 +1,68 @@
+#Script to Prepare XMA Servers dependencies
+
+- name: Install prerequisites
+  hosts: XMA
+  tasks:
+  - name: Install wget & yum-utils
+    yum:
+        name:
+                - wget
+                - git
+                - yum-utils
+                -  yum-plugin-versionlock
+        state: latest
+
+  - name: Add group smroot
+    group:
+          name: "{{ Bravo-Username }"
+          state: present
+
+  - name: Create user smroot
+    user:
+          name: "{{ Bravo-Username }"
+          password: "{{ Bravo_User_Pass | password_hash('sha512') }}"
+          shell: /bin/bash
+          state: present
+          group: "{{ Bravo-Username }"
+          groups: wheel
+
+  - name: Create App folder
+    file:
+          path: "{{ App_folder }}"
+          owner: "{{ Bravo-Username }"
+          group: "{{ Bravo-Username }"
+          recurse: yes
+
+  - name: Add Proxy settings
+    lineinfile:
+          path: /etc/profile
+          state: present
+          line: "{{ item }}"
+    with_items:
+          - 'PROXY_URL="http://10.16.32.17:8080/"'
+          - 'export http_proxy="$PROXY_URL"'
+          - 'export https_proxy="$PROXY_URL"'
+          - 'export ftp_proxy="$PROXY_URL"'
+          - 'export no_proxy="127.0.0.1,localhost"'
+          - 'export HTTP_PROXY="$PROXY_URL"'
+          - 'export HTTPS_PROXY="$PROXY_URL"'
+          - 'export FTP_PROXY="$PROXY_URL"'
+          - 'export NO_PROXY="127.0.0.1,localhost"'
+
+  - name: Install Java 8 OpenJDK for XSB
+    hosts: Bravo
+    vars:
+          java_version: "8"
+    vars_files:
+        - vars/base.yml
+    tasks:
+        - name: Install Java {{ java_version }} OpenJDK
+          include: tasks/java.yml
+
+  - name: Install Apache Maven  for XSB
+    hosts: Bravo
+    vars_files:
+        - vars/base.yml
+    tasks:
+        - name: Install Apache Maven
+          include: tasks/maven.yml        
