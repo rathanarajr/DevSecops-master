@@ -1,7 +1,7 @@
 
 - name: Download DynaTrace locally
   shell: |
-    wget -O /tmp/Dynatrace-OneAgent-Linux.sh "https://yxu53411.live.dynatrace.com/api/v1/deployment/installer/agent/unix/default/latest?arch=x86&flavor=default" --header="Authorization: Api-Token db-JtuUrTGKdgk96Vb7gr"
+    wget -O /tmp/Dynatrace-OneAgent-Linux.sh "https://yxu53411.live.dynatrace.com/api/v1/deployment/installer/agent/unix/default/latest?arch=x86&flavor=default"
 
 - name: Verify Signature
   shell: |
